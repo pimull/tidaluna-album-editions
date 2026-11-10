@@ -103,3 +103,17 @@ Limitations: no album search, no saved setting, and no changes to playback or th
 The user screenshot confirmed AVB-001 is installed and its settings are visible. The user supplied two Currents album links; observations and source evidence are recorded in docs/currents-test-case.md.
 
 AVB-002 replaces the diagnostic switch with a manual read button and two independent metadata results using the source-verified TidalApi.album method. Build passed. Client metadata retrieval and visual layout remain pending user verification. No automatic matching or MQA/Atmos features are implemented.
+
+## AVB-002-fix1: Missing settings investigation
+
+User report: AVB-002 appears in the description, but no settings/button is visible. Client success is not established.
+
+Confirmed local defect: the original watch session (20797) retained @luna/example as the build-time plugin ID and kept writing dist/luna.example.* while reading the renamed manifest. The stale bundle referenced @luna/example, despite declaring album-version-browser in its JSON. That process was stopped, the output rebuilt, and only the current album-version-browser artifacts remain. Whether the user's installed entry was using the stale URL is not yet known.
+
+A single serve-only session now serves the current build. Future source changes require pnpm run build. Restart watch when changing plugin identity; do not keep parallel build watchers.
+
+Resilience change: @luna/lib is loaded only after the read button is clicked. A missing album API now produces a card-level message rather than blocking the settings export at module initialization. No alternate API or endpoint was invented.
+
+Checks: build passed; node tests/settings-smoke.mjs passed with a mocked host that deliberately omits @luna/lib, verifying the Settings export, read button, and two error results. HTTP manifest and module checks confirmed AVB-002-fix1 at the current local URL. This mock does not verify real React rendering, installed Luna compatibility, or live album data.
+
+Client retest: disable and re-enable album-version-browser, reopen the Plugins tab, and use the gear to show settings if available. Confirm AVB-002-fix1 and the read button. If the marker does not update, investigate the installed source URL before requesting any uninstall or reinstall.

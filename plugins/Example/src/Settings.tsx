@@ -1,5 +1,5 @@
 import React from "react";
-import { TidalApi } from "@luna/lib";
+import type { TidalApi } from "@luna/lib";
 import { LunaSettings } from "@luna/ui";
 
 const albumIds = ["77699617", "47696788"] as const;
@@ -23,6 +23,10 @@ export const Settings = () => {
     try {
       const next = await Promise.all(albumIds.map(async (id): Promise<Result> => {
         try {
+          const { TidalApi } = await import("@luna/lib");
+          if (typeof TidalApi?.album !== "function") {
+            return { id, error: "This Luna version does not expose TidalApi.album. Album reading is unavailable." };
+          }
           const album = await TidalApi.album(id);
           return album
             ? { id, album }
@@ -41,7 +45,7 @@ export const Settings = () => {
   return (
     <LunaSettings>
       <section style={{ padding: 16 }}>
-        <h2>Album Version Browser — AVB-002</h2>
+        <h2>Album Version Browser — AVB-002-fix1</h2>
         <p>Read-only test: two user-selected Currents album IDs. No automatic matching yet.</p>
         <button type="button" disabled={loading} onClick={loadAlbums}>
           {loading ? "Reading albums..." : "Read two test albums"}
