@@ -29,3 +29,23 @@ The two public sharing URLs were inaccessible through the research browser. Actu
 Reload album-version-browser in Luna and open its settings. Confirm AVB-002, then click Read two test albums. Expect separate results for 77699617 and 47696788, each showing metadata or an explicit error. Verify the titles and artists before interpreting similarities. Send a screenshot of both results. Do not advance to automated matching until this succeeds.
 
 Failures are isolated per album. Repeat clicks are disabled during requests. Results are held only in component memory; no persistence is implemented. The upstream request helper caches requests, so a retry may reuse a prior result.
+
+## Client-verified result: AVB-002-fix1
+
+The user supplied a screenshot showing both successful metadata results in Luna:
+
+| Field | Album 77699617 | Album 47696788 |
+| --- | --- | --- |
+| Title | Currents | Currents |
+| Artist | Tame Impala | Tame Impala |
+| Release date | 2015-07-17 | 2015-07-17 |
+| Track count | 13 | 13 |
+| UPC | 00602547362193 | 00602547306807 |
+| Version | Not provided | Not provided |
+| Record label | Not provided | Not provided |
+
+Evidence source: user-provided screenshot of the running AVB-002-fix1 settings. UPC values are strings; leading zeroes must be preserved. Missing version/label fields do not establish that the releases lack versions or labels.
+
+Acceptance: settings render, the read button works, and both album IDs return metadata in the user's current session. The read-only milestone is complete. No automatic discovery or grouping is verified. Matching visible fields and differing UPC values do not prove a mastering, mix, codec, or audio-content difference.
+
+Next bounded milestone: investigate a source-supported album search path and test whether a Currents / Tame Impala query can discover both IDs without hard-coding them into search results. Do not implement grouping until search behavior is verified.

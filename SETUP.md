@@ -117,3 +117,7 @@ Resilience change: @luna/lib is loaded only after the read button is clicked. A 
 Checks: build passed; node tests/settings-smoke.mjs passed with a mocked host that deliberately omits @luna/lib, verifying the Settings export, read button, and two error results. HTTP manifest and module checks confirmed AVB-002-fix1 at the current local URL. This mock does not verify real React rendering, installed Luna compatibility, or live album data.
 
 Client retest: disable and re-enable album-version-browser, reopen the Plugins tab, and use the gear to show settings if available. Confirm AVB-002-fix1 and the read button. If the marker does not update, investigate the installed source URL before requesting any uninstall or reinstall.
+
+## AVB-002-fix1 client acceptance
+
+User screenshot confirms the settings and read button render and both requested albums return metadata. The read-only milestone is now client-verified. See docs/currents-test-case.md for the observed fields. No source change was needed after this acceptance, so build tests were not repeated. Automatic search and grouping remain unimplemented.
