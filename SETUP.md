@@ -80,3 +80,20 @@ Client smoke test: open Luna Settings > Plugin Store, find DEV, install/enable E
 The development server was left running for this handoff. If it stops, open a terminal in this project and run pnpm run watch again. Client compatibility and runtime behavior remain unverified until this manual test succeeds.
 
 The original template ignores the lockfile; this project tracks it so working dependency versions can be restored. Future installs should use pnpm install --frozen-lockfile --store-dir ../../work/pnpm-store.
+
+## Milestone 2: Identify our local build (client check pending)
+
+The user confirmed the original Example switch shows state notifications. That validates Example behavior but does not uniquely identify its source.
+
+Changes:
+- Changed the plugin ID to album-version-browser so it is distinct from @luna/example.
+- Added the visible settings title Album Version Browser — AVB-001 and matching ON/OFF notifications.
+- Removed the original page listener, profile-name access, and media-transition alert.
+- Removed upstream author metadata from this project's plugin manifest; original template attribution and license remain in the repository.
+- Kept the existing folder and official settings/logging APIs to minimize changes.
+
+Verification: pnpm run build succeeded. The existing server at port 3000 returned a store listing album-version-browser.mjs and HTTP 200 plugin content containing AVB-001. A duplicate watch launch encountered EADDRINUSE; the duplicate session was stopped and the existing server reused.
+
+Manual test: reopen Luna Settings > Plugin Store, locate album-version-browser (description includes AVB-001), install and enable it, open its settings, and toggle Album Version Browser — AVB-001. Expect an AVB-001 ON/OFF notification. Keep the original Example disabled. Report the exact marker seen before proceeding.
+
+Limitations: no album search, no saved setting, and no changes to playback or the collection. The new plugin still needs client verification. Source reference for local discovery: the installed Luna PluginStoreTab renders http://127.0.0.1:3000 as its local store.
