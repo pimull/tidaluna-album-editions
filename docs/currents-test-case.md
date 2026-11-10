@@ -49,3 +49,13 @@ Evidence source: user-provided screenshot of the running AVB-002-fix1 settings. 
 Acceptance: settings render, the read button works, and both album IDs return metadata in the user's current session. The read-only milestone is complete. No automatic discovery or grouping is verified. Matching visible fields and differing UPC values do not prove a mastering, mix, codec, or audio-content difference.
 
 Next bounded milestone: investigate a source-supported album search path and test whether a Currents / Tame Impala query can discover both IDs without hard-coding them into search results. Do not implement grouping until search behavior is verified.
+
+## AVB-003-fix3: Client search observation accepted
+
+User screenshots show two events, 50 unique observed albums, and album 47696788 present. Album 77699617 was not observed in this run. This verifies native search result extraction, not full search coverage or automated search.
+
+The user additionally reports that 77699617 is discoverable in the artist page Albums list, while 47696788 is visible in search but absent from that artist list. This artist-list behavior is a user observation pending plugin verification. The earlier decoder observations remain user reports only and do not drive matching.
+
+Do not infer that 77699617 can never appear in search: query, country, cached result state, pagination, and catalog changes may affect coverage. The 50 results are candidates returned by search, not 50 editions of Currents. The visible list includes unrelated artists/albums and Currents B-Sides & Remixes, which must not be automatically grouped based only on a shared word or artist.
+
+Next bounded milestone: inspect source-backed artist album-list retrieval, then verify whether that source supplies 77699617. Preserve provenance separately for search and artist-list results. Only after both sources are verified, combine candidates by album ID and evaluate related-release rules. Do not use the known-ID lookup to pretend automatic discovery succeeded.

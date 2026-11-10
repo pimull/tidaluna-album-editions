@@ -171,3 +171,7 @@ Checks passed: build, settings and observer mock tests, including query-only pay
 Diagnostic screenshot confirmed route completion has undefined payload and search success contains query only. Located actual installation using an explicit user path (the sandbox LOCALAPPDATA probe had missed it), then read the packaged configuration and public desktop application bundle. See docs/native-search-evidence.md for sources and findings.
 
 Replaced speculative top-level result reading with the actual query-specific album-list path, read after reducers via microtask. Removed route diagnostics from registration. Build, settings smoke, query-cache regression tests, and local HTTP marker check passed. Client discovery remains pending; user should repeat one native search with fix3. No automatic search or grouping implemented.
+
+## AVB-003-fix3 client acceptance
+
+User screenshots confirm 50 search albums extracted, including 47696788, with 77699617 not observed. The native search observation milestone is accepted. Automatic search execution, exhaustive pagination, artist-list retrieval, and grouping are not verified. Artist-list discovery is the next bounded milestone; see docs/currents-test-case.md. No implementation changed, so build checks were not repeated.
