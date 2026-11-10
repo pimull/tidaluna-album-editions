@@ -20,7 +20,7 @@ The original README and example source remain unchanged. No album-search API has
 - npm: 10.9.2
 - pnpm: 10.5.2
 - nvm and Corepack commands are present.
-- No TIDAL installation was found at the default LOCALAPPDATA/TIDAL location; no running TIDAL process was found. A custom installation is still possible.
+- The user confirmed that TIDAL and TidaLuna are installed and regularly used, and Luna Settings is available. The initial default-path probe did not locate that installation.
 - Git author name and email are not configured. This setup checkpoint uses a command-scoped Codex identity, without changing user settings.
 
 ## Template map
@@ -37,7 +37,7 @@ The original README and example source remain unchanged. No album-search API has
 
 The example uses Tracer, redux, MediaItem, LunaSettings, and LunaSwitchSetting. Their use is verified in the template source, not evidence that album searching or grouping is supported by those APIs.
 
-## Verification and blocker
+## Initial installation failure (resolved)
 
 Official template cloned successfully. Dependency installation attempted with:
 
@@ -45,9 +45,9 @@ Official template cloned successfully. Dependency installation attempted with:
 pnpm install --store-dir ../../work/pnpm-store
 ```
 
-Installation failed with ERR_PNPM_EPERM when pnpm tried to create a dependency symlink (undici-types). Dependencies are incomplete. Build, watch server, and in-client behavior have NOT been verified. Do not treat this as a working plugin milestone.
+Installation failed with ERR_PNPM_EPERM when pnpm tried to create a dependency symlink (undici-types). This initially left dependencies incomplete. See the successful follow-up checks below.
 
-Next, investigate a project-local installation layout that avoids this symlink failure, or verify Windows symlink permissions. Do not delete existing files or change system settings without approval.
+Resolved using project-local .npmrc with node-linker=hoisted. The incomplete node_modules directory was preserved at ../../work/node_modules-incomplete. No Windows settings were changed.
 
 After dependency installation succeeds, run:
 
@@ -63,3 +63,20 @@ Only advance after the build and client smoke test succeed. A build alone does n
 ## Boundaries
 
 No remote repository was created, no code was pushed or published, and no PR was submitted. No TIDAL collection or installed application was modified. Subsequent implementation should use small, verified commits and English code/documentation, with Chinese explanations in chat.
+
+
+## Milestone 1: Build verified; client smoke test pending
+
+- Installed dependencies successfully with pnpm 10.5.2 using the project-local hoisted layout.
+- Preserved pnpm-lock.yaml in Git for reproducible dependency resolution. Luna resolves to commit 19b83373cacd55caddaa656e2481283d4ce06fd1 (package version 1.20.2-beta).
+- pnpm run build exited successfully and generated dist/luna.example.mjs and its source map.
+- pnpm run watch started successfully.
+- HTTP GET http://localhost:3000/store.json returned 200 and listed luna.example.mjs.
+- HTTP GET http://localhost:3000/luna.example.mjs returned 200.
+- Plugin source is unchanged. No album browsing features were implemented.
+
+Client smoke test: open Luna Settings > Plugin Store, find DEV, install/enable Example, and toggle Example Switch in its settings. Report whether it loads and whether the switch responds. The example greeting/switch uses Luna logging; the example also alerts on media transitions. Disable Example after testing if the alerts interrupt normal listening.
+
+The development server was left running for this handoff. If it stops, open a terminal in this project and run pnpm run watch again. Client compatibility and runtime behavior remain unverified until this manual test succeeds.
+
+The original template ignores the lockfile; this project tracks it so working dependency versions can be restored. Future installs should use pnpm install --frozen-lockfile --store-dir ../../work/pnpm-store.
