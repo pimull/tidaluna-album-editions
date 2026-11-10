@@ -135,3 +135,11 @@ Known IDs are used only as acceptance indicators. The existing direct lookup rem
 Checks passed: build, existing settings smoke test, observer smoke test (lifecycle, reset, deduplication, malformed/missing album-list handling, 100-item cap, no injected known IDs), and HTTP manifest/module marker check for AVB-003. Tests use a mocked host; actual event delivery and UI remain pending client verification.
 
 Client test: reload plugin, confirm AVB-003, click Start / reset observation, search Currents Tame Impala in the native TIDAL search, open album results, return to plugin settings, click Stop observation, and report event count and both ID indicators. If no IDs are found, repeat separately with Currents after reset. Do not infer a match or search completeness from this diagnostic.
+
+## AVB-003-fix1: Recursive cleanup regression
+
+User reported Maximum call stack size exceeded from onUnload and Start remaining Not observing. Root cause reproduced: Luna loadExports adds the exported onUnload to the exported unloads set. Our stop routine iterated that same set, invoking onUnload, which called stop again. Both start (which first stops) and unload were affected. The earlier mock omitted the host registration step and therefore missed this failure. The previous search attempt is invalid evidence of discovery coverage.
+
+Fix: keep listener disposers private, export only onUnload, and clear the private set before invoking listener disposers. Start/stop refresh UI immediately, with explicit ACTIVE/INACTIVE text. The regression test now models Luna registering onUnload before user actions and checks repeated cleanup. It failed against AVB-003 and passes against fix1. Existing settings smoke test and build pass; local HTTP code marker verified.
+
+Client acceptance remains pending: reload and verify AVB-003-fix1. The old loaded version may emit its cleanup error once during replacement. If reload cannot replace it, a normal TIDAL exit/restart may be needed; do not force kill it or clear plugin storage. Once fix1 is loaded, Start must show ACTIVE before testing native search. Any recurring unload error or unchanged INACTIVE state blocks the milestone.

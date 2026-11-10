@@ -19,6 +19,9 @@ globalThis.luna = { core: { ...core, modules: {
 } } };
 const code = await readFile(new URL("../dist/album-version-browser.mjs", import.meta.url), "utf8");
 const plugin = await import(`data:text/javascript;base64,${Buffer.from(code).toString("base64")}`);
+// Model Luna registering onUnload in the plugin cleanup set before any user action.
+const hostUnloads = plugin.unloads ?? new Set();
+hostUnloads.add(plugin.onUnload);
 function find(node, test) { if (test(node)) return node; return node?.children?.flat(Infinity).map(child => find(child, test)).find(Boolean); }
 const probe = find(plugin.Settings(), node => typeof node?.type === "function").type;
 const start = find(probe(), node => node?.type === "button" && node.children.includes("Start / reset observation"));
@@ -37,5 +40,8 @@ start.props.onClick(); await new Promise(resolve => setTimeout(resolve, 0));
 probe(); assert.equal(state.at(-1).albums.length, 0); assert.equal(disposals, 1);
 callback({ albums: { items: Array.from({ length: 120 }, (_, id) => ({ id })) } });
 probe(); assert.equal(state.at(-1).albums.length, 100);
-plugin.onUnload(); assert.equal(disposals, 2); assert.equal(plugin.unloads.size, 0);
+for (const dispose of hostUnloads) dispose();
+assert.equal(disposals, 2);
+for (const dispose of hostUnloads) dispose();
+assert.equal(disposals, 2, "Cleanup must be idempotent");
 console.log("PASS: observer lifecycle, reset, deduplication, bound, missing payload, and no injected known IDs.");

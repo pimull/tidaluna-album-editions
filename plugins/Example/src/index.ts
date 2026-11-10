@@ -2,7 +2,7 @@ import { Tracer } from "@luna/core";
 
 export const { trace } = Tracer("[AlbumVersionBrowser]");
 
-trace.msg.log("Album Version Browser: local build AVB-003 loaded.");
+trace.msg.log("Album Version Browser: local build AVB-003-fix1 loaded.");
 
 export { Settings } from "./Settings";
-export { unloads, onUnload } from "./searchObservation";
+export { onUnload } from "./searchObservation";

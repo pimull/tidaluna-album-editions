@@ -2,15 +2,17 @@ import type { LunaUnload } from "@luna/core";
 
 export type SearchAlbum = { id: string; title: string; artist: string };
 export type SearchSnapshot = { status: string; active: boolean; events: number; albums: SearchAlbum[] };
-export const unloads = new Set<LunaUnload>();
+// Private listener cleanup only. Luna registers onUnload in its own cleanup set.
+const listenerDisposers = new Set<LunaUnload>();
 let snapshot: SearchSnapshot = { status: "Not observing", active: false, events: 0, albums: [] };
 let generation = 0;
 export const getSearchSnapshot = () => snapshot;
 
 export function stopSearchObservation() {
   generation++;
-  for (const dispose of unloads) dispose();
-  unloads.clear();
+  const disposers = [...listenerDisposers];
+  listenerDisposers.clear();
+  for (const dispose of disposers) dispose();
   snapshot = { ...snapshot, active: false, status: "Observation stopped" };
 }
 
@@ -22,7 +24,7 @@ export async function startSearchObservation() {
     const { redux } = await import("@luna/lib");
     if (current !== generation) return;
     if (typeof redux?.intercept !== "function") throw new Error("Unsupported host");
-    redux.intercept("search/SEARCH_RESULT_SUCCESS", unloads, payload => {
+    redux.intercept("search/SEARCH_RESULT_SUCCESS", listenerDisposers, payload => {
       // Never return true: that would cancel the host action.
       const items = payload?.albums?.items;
       const events = snapshot.events + 1;

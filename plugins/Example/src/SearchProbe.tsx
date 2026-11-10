@@ -13,9 +13,14 @@ export const SearchProbe = () => {
       <h3>Search observation</h3>
       <p>Start, search Currents Tame Impala in TIDAL, open Albums results, then return here.</p>
       <p>This collects album results from all searches while active. It does not associate results with a specific query or prove completeness.</p>
-      <button type="button" onClick={() => { void startSearchObservation(); }}>Start / reset observation</button>
-      <button type="button" onClick={stopSearchObservation} style={{ marginLeft: 16 }}>Stop observation</button>
-      <p role="status">{snapshot.status}</p>
+      <button type="button" onClick={async () => {
+        const pending = startSearchObservation();
+        setSnapshot(getSearchSnapshot());
+        await pending;
+        setSnapshot(getSearchSnapshot());
+      }}>Start / reset observation</button>
+      <button type="button" onClick={() => { stopSearchObservation(); setSnapshot(getSearchSnapshot()); }} style={{ marginLeft: 16 }}>Stop observation</button>
+      <p role="status">{snapshot.active ? "ACTIVE — " : "INACTIVE — "}{snapshot.status}</p>
       <p>Events received: {snapshot.events} | Unique albums observed: {snapshot.albums.length}</p>
       <p>77699617: {ids.has("77699617") ? "Found in observed results" : "Not observed yet"}</p>
       <p>47696788: {ids.has("47696788") ? "Found in observed results" : "Not observed yet"}</p>
