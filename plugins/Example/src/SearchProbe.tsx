@@ -24,6 +24,8 @@ export const SearchProbe = () => {
       <p>Events received: {snapshot.events} | Unique albums observed: {snapshot.albums.length}</p>
       <p>77699617: {ids.has("77699617") ? "Found in observed results" : "Not observed yet"}</p>
       <p>47696788: {ids.has("47696788") ? "Found in observed results" : "Not observed yet"}</p>
+      <h4>Search event structure (field names and counts only)</h4>
+      {snapshot.diagnostics.map((text, index) => <pre key={index} style={{ whiteSpace: "pre-wrap", fontSize: 13 }}>{text}</pre>)}
       <ul>{snapshot.albums.map(album => <li key={album.id}>{album.title} — {album.artist} (ID: {album.id})</li>)}</ul>
       <p>Not observed does not mean unavailable. Results are kept only in memory; reset clears them.</p>
     </section>

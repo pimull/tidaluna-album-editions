@@ -143,3 +143,15 @@ User reported Maximum call stack size exceeded from onUnload and Start remaining
 Fix: keep listener disposers private, export only onUnload, and clear the private set before invoking listener disposers. Start/stop refresh UI immediately, with explicit ACTIVE/INACTIVE text. The regression test now models Luna registering onUnload before user actions and checks repeated cleanup. It failed against AVB-003 and passes against fix1. Existing settings smoke test and build pass; local HTTP code marker verified.
 
 Client acceptance remains pending: reload and verify AVB-003-fix1. The old loaded version may emit its cleanup error once during replacement. If reload cannot replace it, a normal TIDAL exit/restart may be needed; do not force kill it or clear plugin storage. Once fix1 is loaded, Start must show ACTIVE before testing native search. Any recurring unload error or unchanged INACTIVE state blocks the milestone.
+
+## AVB-003-fix2: Host cleanup and search shape diagnostics
+
+User evidence: fix1 emitted the nonempty unloads warning and received three search success events but collected zero albums. This proves event delivery, not correct payload parsing or absence of the releases. The stopped state is expected after Stop.
+
+Source diagnosis: LunaPlugin registers onUnload in its fallback _unloads if exports.unloads is absent, while unload() drains exports.unloads. The exports setter detects fallback residue. Fix2 exports a dedicated host cleanup set containing the internal cleanup function, but does not export onUnload. Private listener disposers remain separate, so neither recursion nor the fallback path is needed. Old host fallback state may cause a warning during migration; fresh-session verification is required if it persists.
+
+Added bounded in-memory diagnostics: the last six events show root and one-level nested field names, types, array lengths, the expected albums.items shape, and first-item key names when available. No raw payload values, credentials, or search text are displayed or stored by this diagnostic. No speculative alternate parser is introduced. Stop preserves diagnostics; reset clears them.
+
+Verification: build, settings smoke, and observer smoke tests pass. Tests assert exported host cleanup, repeated private cleanup, and distinguish missing albums.items from an empty array. HTTP verifies fix2 is served. Client cleanup behavior and actual event structure remain pending.
+
+Client test: load AVB-003-fix2, Start and confirm ACTIVE, search Currents Tame Impala and open Albums, return, Stop, and capture Search event structure. A normal application restart may be needed to clear the previous version's leftover in-memory host state. Do not clear storage or reinstall Luna.
