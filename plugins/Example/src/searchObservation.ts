@@ -24,7 +24,28 @@ export async function startSearchObservation() {
     const { redux } = await import("@luna/lib");
     if (current !== generation) return;
     if (typeof redux?.intercept !== "function") throw new Error("Unsupported host");
-    redux.intercept(["search/SEARCH_RESULT_SUCCESS", "route/LOADER_DATA__SEARCH", "route/LOADER_DATA__SEARCH--SUCCESS"], listenerDisposers, (payload, actionType) => {
+    redux.intercept("search/SEARCH_RESULT_SUCCESS", listenerDisposers, (eventPayload) => {
+      const event = eventPayload as unknown as { query?: unknown; result?: { albums?: unknown } };
+      if (typeof event?.query !== "string") {
+        snapshot = { ...snapshot, events: snapshot.events + 1, status: "Search event has no query; cannot identify its album list" };
+        return;
+      }
+      const query = event.query;
+      // Interceptors run before reducers. Read the query-specific list afterwards.
+      queueMicrotask(() => {
+        if (current !== generation) return;
+        try {
+          const state = redux.store.getState();
+          const list = state.content?.albumLists?.[`search/albums/${encodeURIComponent(query)}`];
+          const ids = list?.sorted?.defaultSort?.items;
+          const items = Array.isArray(ids) ? ids.map(id => state.content?.albums?.[id]).filter(Boolean) : undefined;
+          consume({ albums: { items }, queryListPresent: Boolean(list) }, "query-specific search cache");
+        } catch {
+          snapshot = { ...snapshot, events: snapshot.events + 1, status: "Could not read this search's album list in the current Luna session" };
+        }
+      });
+    });
+    function consume(payload: unknown, actionType: string) {
       // Never return true: that would cancel the host action.
       const items = (payload as { albums?: { items?: unknown } } | null)?.albums?.items;
       const events = snapshot.events + 1;
@@ -47,7 +68,7 @@ export async function startSearchObservation() {
         });
       }
       snapshot = { active: true, events, diagnostics, albums: [...collected.values()], status: "Search results observed (up to 100 unique albums)" };
-    });
+    }
     snapshot = { ...snapshot, active: true, status: "Observing. Search Currents Tame Impala in TIDAL, then return here." };
   } catch {
     if (current === generation) {

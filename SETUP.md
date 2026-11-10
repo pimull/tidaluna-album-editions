@@ -165,3 +165,9 @@ Source inspection found search state has no declared result collection. Content 
 Diagnostics now include event names and bounded structure traversal (depth 4, 60 lines per event, first array entry only, last six events). Scalar payload values are not printed. Nested field names may still reflect runtime map keys, so do not interpret this as a full payload privacy guarantee. No session/auth state is inspected. Unknown nested route payloads are not parsed as albums until client evidence establishes their meaning.
 
 Checks passed: build, settings and observer mock tests, including query-only payload privacy and nested route shape reporting without injecting album results; HTTP marker check. Client event structure remains pending. Test: start observation, search Currents Tame Impala, open Albums, stop, and capture blocks labelled route/LOADER_DATA__SEARCH or its --SUCCESS event. This is diagnostic progress, not completion of search discovery.
+
+## AVB-003-fix3: Source-backed query-cache reading
+
+Diagnostic screenshot confirmed route completion has undefined payload and search success contains query only. Located actual installation using an explicit user path (the sandbox LOCALAPPDATA probe had missed it), then read the packaged configuration and public desktop application bundle. See docs/native-search-evidence.md for sources and findings.
+
+Replaced speculative top-level result reading with the actual query-specific album-list path, read after reducers via microtask. Removed route diagnostics from registration. Build, settings smoke, query-cache regression tests, and local HTTP marker check passed. Client discovery remains pending; user should repeat one native search with fix3. No automatic search or grouping implemented.

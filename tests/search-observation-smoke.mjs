@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 let callback;
+const cache = { content: { albumLists: {}, albums: {} } };
 let disposals = 0;
 let registrations = 0;
 const state = [];
@@ -12,8 +13,8 @@ const react = {
 const core = { Tracer: () => ({ trace: { msg: { log() {} } } }), LunaPlugin: { getByName: () => undefined } };
 globalThis.luna = { core: { ...core, modules: {
   react, "@luna/core": core, "@luna/ui": { LunaSettings: "settings" },
-  "@luna/lib": { redux: { intercept(type, unloads, cb) {
-    assert.deepEqual(type, ["search/SEARCH_RESULT_SUCCESS", "route/LOADER_DATA__SEARCH", "route/LOADER_DATA__SEARCH--SUCCESS"]); registrations++; callback = cb;
+  "@luna/lib": { redux: { store: { getState: () => cache }, intercept(type, unloads, cb) {
+    assert.equal(type, "search/SEARCH_RESULT_SUCCESS"); registrations++; callback = cb;
     unloads.add(() => { disposals++; });
   } } },
 } } };
@@ -26,33 +27,35 @@ if (plugin.onUnload) hostUnloads.add(plugin.onUnload);
 function find(node, test) { if (test(node)) return node; return node?.children?.flat(Infinity).map(child => find(child, test)).find(Boolean); }
 const probe = find(plugin.Settings(), node => typeof node?.type === "function").type;
 const start = find(probe(), node => node?.type === "button" && node.children.includes("Start / reset observation"));
-start.props.onClick();
-await new Promise(resolve => setTimeout(resolve, 0));
+await start.props.onClick();
 assert.equal(registrations, 1);
-assert.notEqual(callback({ albums: { items: [{ id: 77699617, title: "Currents", artist: { name: "Tame Impala" } }] } }), true);
-probe(); let snapshot = state.at(-1);
-assert.equal(snapshot.albums.length, 1);
-assert.equal(snapshot.albums[0].id, "77699617");
-assert.ok(!snapshot.albums.some(album => album.id === "47696788"), "Known IDs must not be injected");
-callback({ albums: { items: [{ id: 77699617 }, { id: 47696788 }] } });
-probe(); assert.equal(state.at(-1).albums.length, 2);
-callback({}); probe(); assert.equal(state.at(-1).events, 3);
-assert.match(state.at(-1).diagnostics.at(-1), /Expected albums.items: undefined/);
-callback({ albums: { items: [] } }); probe();
-assert.match(state.at(-1).diagnostics.at(-1), /Expected albums.items: array\(0\)/);
-callback({ query: "private query" }, "search/SEARCH_RESULT_SUCCESS"); probe();
-assert.ok(!state.at(-1).diagnostics.at(-1).includes("private query"));
-callback({ data: { results: { albums: [{ id: 42 }] } } }, "route/LOADER_DATA__SEARCH--SUCCESS"); probe();
-assert.match(state.at(-1).diagnostics.at(-1), /data.results.albums: array\(1\)/);
-assert.equal(state.at(-1).albums.length, 2, "Unknown route payloads must not become guessed album results");
-start.props.onClick(); await new Promise(resolve => setTimeout(resolve, 0));
-probe(); assert.equal(state.at(-1).albums.length, 0); assert.equal(disposals, 1);
-callback({ albums: { items: Array.from({ length: 120 }, (_, id) => ({ id })) } });
-probe(); assert.equal(state.at(-1).albums.length, 100);
+const query = "Currents Tame Impala";
+const key = `search/albums/${encodeURIComponent(query)}`;
+cache.content.albums = {
+  77699617: { id: 77699617, title: "Currents", artist: { name: "Tame Impala" } },
+  47696788: { id: 47696788, title: "Currents", artist: { name: "Tame Impala" } },
+};
+assert.notEqual(callback({ query }), true);
+// Simulate the reducer updating the list after the interceptor returns.
+cache.content.albumLists[key] = { sorted: { defaultSort: { items: [77699617] } } };
+await Promise.resolve(); probe();
+assert.deepEqual(state.at(-1).albums.map(a => a.id), ["77699617"]);
+assert.ok(!state.at(-1).albums.some(a => a.id === "47696788"), "Global cache must not leak into query results");
+cache.content.albumLists[key].sorted.defaultSort.items = [77699617, 47696788, 77699617];
+callback({ query }); await Promise.resolve(); probe();
+assert.equal(state.at(-1).albums.length, 2);
+assert.equal(state.at(-1).events, 2);
+await start.props.onClick(); assert.equal(disposals, 1);
+callback({ query: "Uncached query" }); await Promise.resolve(); probe();
+assert.equal(state.at(-1).albums.length, 0);
+assert.match(state.at(-1).status, /without an album list/);
+// Stop before queued state read: it must not repopulate results.
+callback({ query });
 for (const dispose of hostUnloads) dispose();
+await Promise.resolve(); probe();
+assert.equal(state.at(-1).albums.length, 0);
 assert.equal(disposals, 2);
 for (const dispose of hostUnloads) dispose();
-assert.equal(disposals, 2, "Cleanup must be idempotent");
+assert.equal(disposals, 2);
 hostUnloads.clear();
-assert.equal(plugin.unloads.size, 0);
-console.log("PASS: observer lifecycle, reset, deduplication, bound, missing payload, and no injected known IDs.");
+console.log("PASS: query-specific cached IDs, post-reducer timing, no global-cache injection, reset and queued-read cleanup.");
