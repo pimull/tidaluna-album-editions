@@ -13,7 +13,7 @@ const core = { Tracer: () => ({ trace: { msg: { log() {} } } }), LunaPlugin: { g
 globalThis.luna = { core: { ...core, modules: {
   react, "@luna/core": core, "@luna/ui": { LunaSettings: "settings" },
   "@luna/lib": { redux: { intercept(type, unloads, cb) {
-    assert.equal(type, "search/SEARCH_RESULT_SUCCESS"); registrations++; callback = cb;
+    assert.deepEqual(type, ["search/SEARCH_RESULT_SUCCESS", "route/LOADER_DATA__SEARCH", "route/LOADER_DATA__SEARCH--SUCCESS"]); registrations++; callback = cb;
     unloads.add(() => { disposals++; });
   } } },
 } } };
@@ -40,6 +40,11 @@ callback({}); probe(); assert.equal(state.at(-1).events, 3);
 assert.match(state.at(-1).diagnostics.at(-1), /Expected albums.items: undefined/);
 callback({ albums: { items: [] } }); probe();
 assert.match(state.at(-1).diagnostics.at(-1), /Expected albums.items: array\(0\)/);
+callback({ query: "private query" }, "search/SEARCH_RESULT_SUCCESS"); probe();
+assert.ok(!state.at(-1).diagnostics.at(-1).includes("private query"));
+callback({ data: { results: { albums: [{ id: 42 }] } } }, "route/LOADER_DATA__SEARCH--SUCCESS"); probe();
+assert.match(state.at(-1).diagnostics.at(-1), /data.results.albums: array\(1\)/);
+assert.equal(state.at(-1).albums.length, 2, "Unknown route payloads must not become guessed album results");
 start.props.onClick(); await new Promise(resolve => setTimeout(resolve, 0));
 probe(); assert.equal(state.at(-1).albums.length, 0); assert.equal(disposals, 1);
 callback({ albums: { items: Array.from({ length: 120 }, (_, id) => ({ id })) } });

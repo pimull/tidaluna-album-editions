@@ -24,11 +24,11 @@ export async function startSearchObservation() {
     const { redux } = await import("@luna/lib");
     if (current !== generation) return;
     if (typeof redux?.intercept !== "function") throw new Error("Unsupported host");
-    redux.intercept("search/SEARCH_RESULT_SUCCESS", listenerDisposers, payload => {
+    redux.intercept(["search/SEARCH_RESULT_SUCCESS", "route/LOADER_DATA__SEARCH", "route/LOADER_DATA__SEARCH--SUCCESS"], listenerDisposers, (payload, actionType) => {
       // Never return true: that would cancel the host action.
-      const items = payload?.albums?.items;
+      const items = (payload as { albums?: { items?: unknown } } | null)?.albums?.items;
       const events = snapshot.events + 1;
-      const diagnostics = [...snapshot.diagnostics, describePayload(payload, events)].slice(-6);
+      const diagnostics = [...snapshot.diagnostics, describePayload(payload, events, actionType)].slice(-6);
       if (!Array.isArray(items)) {
         snapshot = { ...snapshot, events, diagnostics, status: "Search event received without an album list" };
         return;
@@ -66,24 +66,27 @@ export function onUnload() {
 // This set is intentionally separate from the observer listener disposers.
 export const unloads = new Set<LunaUnload>([onUnload]);
 
-function describePayload(payload: unknown, event: number): string {
+function describePayload(payload: unknown, event: number, actionType: string): string {
   const shape = (value: unknown): string => {
     if (value === null) return "null";
     if (Array.isArray(value)) return `array(${value.length})`;
     if (typeof value === "object") return "object";
     return typeof value;
   };
-  const lines = [`Event ${event}: ${shape(payload)}`];
-  if (payload && typeof payload === "object") {
-    for (const [key, value] of Object.entries(payload).slice(0, 16)) {
-      lines.push(`${key.slice(0, 60)}: ${shape(value)}`);
-      if (value && typeof value === "object" && !Array.isArray(value)) {
-        for (const [child, nested] of Object.entries(value).slice(0, 12)) {
-          lines.push(`  ${key.slice(0, 60)}.${child.slice(0, 60)}: ${shape(nested)}`);
-        }
-      }
+  const lines = [`Event ${event}: ${actionType}`, `Payload: ${shape(payload)}`];
+  const visited = new WeakSet<object>();
+  function walk(value: unknown, path: string, depth: number) {
+    if (!value || typeof value !== "object" || depth > 4 || lines.length >= 60 || visited.has(value)) return;
+    visited.add(value);
+    const entries = Array.isArray(value) ? value.slice(0, 1).map((item, index) => [String(index), item] as const) : Object.entries(value).slice(0, 12);
+    for (const [key, child] of entries) {
+      if (lines.length >= 60) break;
+      const next = path ? `${path}.${key.slice(0, 60)}` : key.slice(0, 60);
+      lines.push(`${next}: ${shape(child)}`);
+      walk(child, next, depth + 1);
     }
   }
+  walk(payload, "", 0);
   const items = (payload as { albums?: { items?: unknown } } | null)?.albums?.items;
   lines.push(`Expected albums.items: ${shape(items)}`);
   if (Array.isArray(items) && items.length) {

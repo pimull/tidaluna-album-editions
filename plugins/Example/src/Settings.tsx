@@ -46,7 +46,7 @@ export const Settings = () => {
   return (
     <LunaSettings>
       <section style={{ padding: 16 }}>
-        <h2>Album Version Browser — AVB-003-fix2</h2>
+        <h2>Album Version Browser — AVB-003-diag1</h2>
         <SearchProbe />
         <h3>Known album lookup (separate from search results)</h3>
         <button type="button" disabled={loading} onClick={loadAlbums}>

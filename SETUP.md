@@ -155,3 +155,13 @@ Added bounded in-memory diagnostics: the last six events show root and one-level
 Verification: build, settings smoke, and observer smoke tests pass. Tests assert exported host cleanup, repeated private cleanup, and distinguish missing albums.items from an empty array. HTTP verifies fix2 is served. Client cleanup behavior and actual event structure remain pending.
 
 Client test: load AVB-003-fix2, Start and confirm ACTIVE, search Currents Tame Impala and open Albums, return, Stop, and capture Search event structure. A normal application restart may be needed to clear the previous version's leftover in-memory host state. Do not clear storage or reinstall Luna.
+
+## AVB-003-diag1: Confirmed search payload mismatch
+
+User screenshot shows three search/SEARCH_RESULT_SUCCESS payloads each containing only query:string; albums.items is undefined. This confirms event delivery and a mismatch with Luna's declared SearchResultPayload. Zero observed albums is not evidence of zero search results. The screenshot alone does not establish whether lifecycle warnings are gone.
+
+Source inspection found search state has no declared result collection. Content has caches, but those cannot be assumed to represent a particular search. The action catalog also explicitly lists route/LOADER_DATA__SEARCH and route/LOADER_DATA__SEARCH--SUCCESS with unknown payloads. This diagnostic adds those two exact events without dispatching them or assuming their shape. No fabricated endpoint or cached-album shortcut is used.
+
+Diagnostics now include event names and bounded structure traversal (depth 4, 60 lines per event, first array entry only, last six events). Scalar payload values are not printed. Nested field names may still reflect runtime map keys, so do not interpret this as a full payload privacy guarantee. No session/auth state is inspected. Unknown nested route payloads are not parsed as albums until client evidence establishes their meaning.
+
+Checks passed: build, settings and observer mock tests, including query-only payload privacy and nested route shape reporting without injecting album results; HTTP marker check. Client event structure remains pending. Test: start observation, search Currents Tame Impala, open Albums, stop, and capture blocks labelled route/LOADER_DATA__SEARCH or its --SUCCESS event. This is diagnostic progress, not completion of search discovery.
