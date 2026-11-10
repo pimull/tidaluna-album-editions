@@ -121,3 +121,17 @@ Client retest: disable and re-enable album-version-browser, reopen the Plugins t
 ## AVB-002-fix1 client acceptance
 
 User screenshot confirms the settings and read button render and both requested albums return metadata. The read-only milestone is now client-verified. See docs/currents-test-case.md for the observed fields. No source change was needed after this acceptance, so build tests were not repeated. Automatic search and grouping remain unimplemented.
+
+## AVB-003: Native search observation (client verification pending)
+
+Product direction from user-provided Roon screenshots: group related releases of the same album while preserving edition names and track counts. Deluxe editions must not be excluded solely because their track count differs greatly. Automatic matching, codec labels, MQA reports, and Atmos filters remain out of scope for this milestone.
+
+The installed Luna source exposes redux.intercept and types search/SEARCH_RESULT_SUCCESS as SearchResultPayload with albums.items. Sources: plugins/lib/src/redux/intercept.ts, types/actions/index.ts, and types/actions/Search.ts. This is an internal, version-dependent host event, not a documented public TIDAL search endpoint. No dedicated search method was found in the inspected TidalApi class; action types alone do not authorize inventing a dispatch payload.
+
+AVB-003 adds a manually started observer of native searches. Users search in TIDAL themselves. The observer does not dispatch, cancel, or modify host actions, and does not initiate a catalog request. It collects at most 100 unique album summaries in memory across observed events until stopped, reset, or unloaded. Observation intentionally survives closing settings so users can search and return. The UI polling timer is cleaned up when settings unmounts; the plugin-level listener is cleaned up on stop/reset/unload.
+
+Known IDs are used only as acceptance indicators. The existing direct lookup remains visibly separate and never supplies observer results. Results cannot be attributed to a particular query; do not search unrelated terms during the test. Missing IDs mean not observed, not unavailable. No automatic discovery, pagination, or grouping is implemented yet.
+
+Checks passed: build, existing settings smoke test, observer smoke test (lifecycle, reset, deduplication, malformed/missing album-list handling, 100-item cap, no injected known IDs), and HTTP manifest/module marker check for AVB-003. Tests use a mocked host; actual event delivery and UI remain pending client verification.
+
+Client test: reload plugin, confirm AVB-003, click Start / reset observation, search Currents Tame Impala in the native TIDAL search, open album results, return to plugin settings, click Stop observation, and report event count and both ID indicators. If no IDs are found, repeat separately with Currents after reset. Do not infer a match or search completeness from this diagnostic.
