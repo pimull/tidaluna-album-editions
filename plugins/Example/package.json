@@ -1,6 +1,6 @@
 {
   "name": "album-version-browser",
-  "description": "Album Version Browser — local connection test AVB-001. Album search is not implemented yet.",
+  "description": "Album Version Browser — read-only album test AVB-002. Album search is not implemented yet.",
   "main": "./src/index.ts",
   "type": "module"
 }

@@ -97,3 +97,9 @@ Verification: pnpm run build succeeded. The existing server at port 3000 returne
 Manual test: reopen Luna Settings > Plugin Store, locate album-version-browser (description includes AVB-001), install and enable it, open its settings, and toggle Album Version Browser — AVB-001. Expect an AVB-001 ON/OFF notification. Keep the original Example disabled. Report the exact marker seen before proceeding.
 
 Limitations: no album search, no saved setting, and no changes to playback or the collection. The new plugin still needs client verification. Source reference for local discovery: the installed Luna PluginStoreTab renders http://127.0.0.1:3000 as its local store.
+
+## Milestone 3: AVB-002 read-only album probe (client check pending)
+
+The user screenshot confirmed AVB-001 is installed and its settings are visible. The user supplied two Currents album links; observations and source evidence are recorded in docs/currents-test-case.md.
+
+AVB-002 replaces the diagnostic switch with a manual read button and two independent metadata results using the source-verified TidalApi.album method. Build passed. Client metadata retrieval and visual layout remain pending user verification. No automatic matching or MQA/Atmos features are implemented.

@@ -1,23 +1,70 @@
 import React from "react";
+import { TidalApi } from "@luna/lib";
+import { LunaSettings } from "@luna/ui";
 
-import { LunaSettings, LunaSwitchSetting } from "@luna/ui";
-import { trace } from ".";
+const albumIds = ["77699617", "47696788"] as const;
+type AlbumData = Awaited<ReturnType<typeof TidalApi.album>>;
+type Result = { id: string; album?: AlbumData; error?: string };
 
 export const Settings = () => {
-  const [checked, setChecked] = React.useState(false);
-  const onChange = React.useCallback((_: React.ChangeEvent<HTMLInputElement>, checked?: boolean) => {
-    const enabled = checked ?? false;
-    trace.msg.log(`AVB-001: local connection test is ${enabled ? "ON" : "OFF"}. Album search is not implemented yet.`);
-    setChecked(enabled);
+  const [results, setResults] = React.useState<Result[]>([]);
+  const [loading, setLoading] = React.useState(false);
+  const busy = React.useRef(false);
+  const mounted = React.useRef(true);
+  React.useEffect(() => {
+    mounted.current = true;
+    return () => { mounted.current = false; };
   }, []);
+
+  const loadAlbums = async () => {
+    if (busy.current) return;
+    busy.current = true;
+    setLoading(true);
+    try {
+      const next = await Promise.all(albumIds.map(async (id): Promise<Result> => {
+        try {
+          const album = await TidalApi.album(id);
+          return album
+            ? { id, album }
+            : { id, error: "Album unavailable for this session (no data returned)." };
+        } catch {
+          return { id, error: "Could not read this album. Check your connection and Luna compatibility, then retry." };
+        }
+      }));
+      if (mounted.current) setResults(next);
+    } finally {
+      busy.current = false;
+      if (mounted.current) setLoading(false);
+    }
+  };
+
   return (
     <LunaSettings>
-      <LunaSwitchSetting
-        title="Album Version Browser — AVB-001"
-        checked={checked}
-        desc="Local connection test only. Toggle to show an AVB-001 message. This setting is not saved."
-        onChange={onChange}
-      />
+      <section style={{ padding: 16 }}>
+        <h2>Album Version Browser — AVB-002</h2>
+        <p>Read-only test: two user-selected Currents album IDs. No automatic matching yet.</p>
+        <button type="button" disabled={loading} onClick={loadAlbums}>
+          {loading ? "Reading albums..." : "Read two test albums"}
+        </button>
+        <div aria-live="polite">
+          {results.map(({ id, album, error }) => (
+            <section key={id} style={{ marginTop: 16, padding: 12, border: "1px solid #777", borderRadius: 8 }}>
+              <h3>Album ID: {id}</h3>
+              {error ? <p>{error}</p> : album && (
+                <dl>
+                  <dt>Title</dt><dd>{album.title || "Not provided"}</dd>
+                  <dt>Artist</dt><dd>{album.artists?.map(artist => artist.name).join(", ") || album.artist?.name || "Not provided"}</dd>
+                  <dt>Version</dt><dd>{album.version || "Not provided"}</dd>
+                  <dt>Release date</dt><dd>{album.releaseDate || "Not provided"}</dd>
+                  <dt>Track count</dt><dd>{album.numberOfTracks ?? "Not provided"}</dd>
+                  <dt>UPC</dt><dd>{album.upc || "Not provided"}</dd>
+                  <dt>Record label</dt><dd>{album.recordLabel || "Not provided"}</dd>
+                </dl>
+              )}
+            </section>
+          ))}
+        </div>
+      </section>
     </LunaSettings>
   );
 };
