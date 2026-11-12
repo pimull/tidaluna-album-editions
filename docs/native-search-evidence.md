@@ -66,3 +66,13 @@ Discovery now follows Other Versions links from matched editions, not just the s
 Click outside the panel or press Escape to close. The Close control is sticky while scrolling. Background clicks close without activating underlying controls. No TIDAL UI automation was used.
 
 The user confirmed AVB-006.3 returned 24-bit/192 kHz for the anniversary first track. Artist requests still fail with HTTP 400/subStatus 1002; its cause and the unlinked Currents case remain unresolved. AVB-006.4 passes local build/tests but awaits user acceptance.
+
+## AVB-006.5: native v2 request headers
+
+Inspection of the downloaded public TIDAL bundle `index-DnY8hG-p.js` found an omitted transport requirement. `EP(headers,url)` sets Accept: application/json and, for v2 URLs, x-tidal-client-version from Ki(B.version). `B.version` uses tre(), reading window.wimp.dataset.version. Ki removes the build suffix and normalizes numeric components (2026.01.09-build -> 2026.1.9). Logged-in EP uses Authorization; x-tidal-token is used for the alternate unauthenticated branch, not both together.
+
+AVB-006.4 reused Luna TidalApi.getAuthHeaders for every endpoint. That helper does not add a web client version header and supplies both authentication headers. AVB-006.5 adds a dedicated metadata transport that matches the native v2 headers. It derives the version from runtime wimp data (with the equivalent element lookup), never hardcodes a version, and preserves existing v1 authentication. If the web version cannot be read, v2 requests fail explicitly rather than sending a fabricated version. No user credentials are logged, exported or read by tooling.
+
+Local tests verify normalization, runtime lookup, header construction at the fetch boundary, v1 preservation, cancellation and both Currents discovery directions through a mock HTTP transport. The fixture's rejection of incomplete headers verifies our wiring, not the real server's validation behavior. HTTP 400/subStatus 1002 can represent multiple request problems; this is a confirmed client/plug-in request discrepancy, but the live root cause and final resolution remain pending user verification.
+
+Acceptance: reload AVB-006.5, open Currents and check for both album IDs (47696788 and 77699617), an Artist Albums source label, and absence of HTTP 400. Also check one previously failing Pink Floyd artist request. No desktop UI automation was performed.

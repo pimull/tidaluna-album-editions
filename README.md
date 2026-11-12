@@ -42,3 +42,7 @@ The main button is now English-only. Artist HTTP 400 and the missing Currents ve
 ## AVB-006.4 update
 
 First-track resolution loads automatically (two concurrent requests, 30 releases maximum). Other Versions links are followed across matched editions, up to 12 additional pages, to reduce differences between entry points. The panel closes on outside click or Escape and keeps Close visible while scrolling. Closing cancels pending metadata work. Artist HTTP 400/code 1002 and the unlinked Currents case remain unresolved; association traversal does not fix the artist endpoint. Build and regression tests pass; installed-client acceptance remains pending.
+
+## AVB-006.5 update
+
+Corrects a verified discrepancy with the native client's v2 HTTP requests: runtime x-tidal-client-version and Accept headers, plus bearer-only authenticated v2 requests. The version comes from TIDAL's own web build metadata, not the plugin or desktop installer version. Missing runtime version is reported explicitly. All local tests and build pass; live resolution of artist HTTP 400 and Currents coverage requires user testing.

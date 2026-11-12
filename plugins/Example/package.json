@@ -1,6 +1,6 @@
 {
   "name": "album-version-browser",
-  "description": "AVB-006.4 — Find related editions from an album page. Automatic search and artist discovery.",
+  "description": "AVB-006.5 — Find related editions from an album page. Automatic search and artist discovery.",
   "main": "./src/index.ts",
   "type": "module"
 }

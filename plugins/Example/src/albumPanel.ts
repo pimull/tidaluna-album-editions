@@ -1,4 +1,5 @@
-import { readFirstTrackSpecification, specificationLabel, requestError, runSpecificationJobs } from "./specifications";
+import { createMetadataRequest, clientVersionFromDocument } from "./http";
+import { readFirstTrackSpecification, specificationLabel, runSpecificationJobs } from "./specifications";
 import type { LunaUnload } from "@luna/core";
 import { currentAlbumId, openAlbumInClient } from "./navigation";
 import { discover, audioBadges, displayTitle } from "./discovery";
@@ -21,7 +22,7 @@ backdrop.onclick=()=>close();
 let activeId="", renderedId="";
 const el=(tag:string,text?:string)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};
 function close(){controller?.abort();panel.style.display="none";backdrop.style.display="none";button.disabled=false;button.focus();}
-function header(){panel.replaceChildren();const closeButton=el("button","Close ×") as HTMLButtonElement;closeButton.style.cssText="float:right;color:white;background:#333;border:1px solid #777;border-radius:6px;padding:6px 12px;cursor:pointer";closeButton.onclick=close;const heading=el("div");heading.style.cssText="position:sticky;top:-20px;background:#17171e;padding:12px 0;z-index:1";heading.append(closeButton,el("h2","Related album versions"));panel.append(heading,el("p","AVB-006.4 · Other Versions + Search + Artist Albums"));closeButton.focus();}
+function header(){panel.replaceChildren();const closeButton=el("button","Close ×") as HTMLButtonElement;closeButton.style.cssText="float:right;color:white;background:#333;border:1px solid #777;border-radius:6px;padding:6px 12px;cursor:pointer";closeButton.onclick=close;const heading=el("div");heading.style.cssText="position:sticky;top:-20px;background:#17171e;padding:12px 0;z-index:1";heading.append(closeButton,el("h2","Related album versions"));panel.append(heading,el("p","AVB-006.5 · Other Versions + Search + Artist Albums"));closeButton.focus();}
 function note(text:string){const p=el("p",text);panel.append(p);return p;}
 const currentId=currentAlbumId;
 async function open(){
@@ -32,12 +33,7 @@ async function open(){
     const state=redux.store.getState();const id=currentId(state);
     if(!id)throw new Error("Open an album page first.");
     const headers=await TidalApi.getAuthHeaders();
-    const request=async(url:string,signal:AbortSignal)=>{
-      const timeout=new AbortController();const relay=()=>timeout.abort();signal.addEventListener("abort",relay,{once:true});if(signal.aborted)timeout.abort();const timer=setTimeout(()=>timeout.abort(),20000);
-      try {const response=await fetch(url,{headers,signal:timeout.signal});if(!response.ok){let body;try{body=await response.json();}catch{}throw new Error(requestError(response.status,body));}return await response.json();}
-      catch(error){if(signal.aborted)throw error;if(timeout.signal.aborted)throw new Error("Request timed out");throw error;}
-      finally{clearTimeout(timer);signal.removeEventListener("abort",relay);}
-    };
+    const request=createMetadataRequest(headers,clientVersionFromDocument);
     const result=await discover(id,{countryCode:state.session.countryCode,locale:state.settings.language},request,signal);
     if(disposed||signal.aborted||controller!==run)return;
     progress.textContent=`${result.seed.title} · ${result.rows.length} release(s) including the current album`;
