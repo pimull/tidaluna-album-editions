@@ -1,5 +1,5 @@
 export type Artist = { id: string | number; name?: string };
-export type Album = { id: string | number; title: string; artists?: Artist[]; artist?: Artist; version?: string; cover?: string; releaseDate?: string; numberOfTracks?: number; audioQuality?: string; mediaMetadata?: { tags?: string[] } };
+export type Album = { id: string | number; title: string; artists?: Artist[]; artist?: Artist; version?: string; cover?: string; releaseDate?: string; numberOfTracks?: number; audioQuality?: string; audioModes?: string[]; mediaMetadata?: { tags?: string[] } };
 export type Release = { album: Album; sources: string[]; current: boolean; reason: string };
 export const normalize = (s: string) => s.normalize("NFKC").toLowerCase().replace(/\s+/g," ").trim();
 function edition(s: string) {
@@ -31,13 +31,20 @@ export function apiLocale(value:string){
   const parts=value.replace("_","-").split("-");
   return parts.length===2?`${parts[0].toLowerCase()}_${parts[1].toUpperCase()}`:value;
 }
+export type AudioBadge = {label:string;color:string};
+export function audioBadges(album:Album):AudioBadge[]{
+  const tags=new Set([...(album.mediaMetadata?.tags??[]),...(album.audioModes??[])]);
+  const badges:AudioBadge[]=[];
+  if(tags.has("DOLBY_ATMOS"))badges.push({label:"Dolby Atmos",color:"#6ab5ff"});
+  if(tags.has("SONY_360RA"))badges.push({label:"Sony 360 Reality Audio",color:"#6ab5ff"});
+  if(tags.has("HIRES_LOSSLESS")||album.audioQuality==="HI_RES_LOSSLESS")badges.push({label:"Hi-Res lossless",color:"#ffd432"});
+  else if(tags.has("LOSSLESS")||album.audioQuality==="LOSSLESS")badges.push({label:"Lossless",color:"#33ffee"});
+  // LOW/HIGH cannot establish spatial format, CD resolution or exact stream specs.
+  return badges;
+}
 export function audioSummary(album:Album){
-  const tags=album.mediaMetadata?.tags??[];
-  if(tags.includes("HIRES_LOSSLESS")||album.audioQuality==="HI_RES_LOSSLESS")return "Hi-Res lossless · TIDAL metadata";
-  if(tags.includes("LOSSLESS")||album.audioQuality==="LOSSLESS")return "Lossless · TIDAL metadata";
-  if(album.audioQuality==="HIGH")return "High · TIDAL metadata";
-  if(album.audioQuality==="LOW")return "Low · TIDAL metadata";
-  return "Audio specification not confirmed";
+  const badges=audioBadges(album);
+  return badges.length?badges.map(b=>b.label).join(" + ")+" · TIDAL metadata":"Audio specification not confirmed";
 }
 // The client and Luna's albumItems helper use this page endpoint.
 // English labels distinguish Other Versions from unrelated More Albums modules.
@@ -57,6 +64,17 @@ export function nativeVersions(page:any):Album[] {
 export function displayTitle(album:Album){
   return album.version&&!normalize(album.title).includes(normalize(album.version))?`${album.title} — ${album.version}`:album.title;
 }
+// Shapes recognized by the client's TI album adapter. Never traverse arbitrary data.
+export function artistPageAlbums(page:any):Album[] {
+  if(!Array.isArray(page?.items))throw new Error("Unexpected artist page format");
+  const albums:Album[]=[];
+  const lists=new Set(["HORIZONTAL_LIST","HORIZONTAL_LIST_WITH_CONTEXT","COMPACT_GRID_CARD","PUBLIC_PLAYLIST_LIST","SHORTCUT_LIST"]);
+  for(const module of page.items){
+    const items=lists.has(module?.type)&&Array.isArray(module.items)?module.items:module?.type==="ANNIVERSARY_CARD"?[module.item]:[];
+    for(const item of items)if(item?.type==="ALBUM"&&/^\d+$/.test(String(item.data?.id))&&typeof item.data?.title==="string")albums.push(item.data);
+  }
+  return albums;
+}
 export type Request = (url:string, signal:AbortSignal)=>Promise<any>;
 export async function discover(id:string, context:{countryCode:string;locale:string}, request:Request, signal:AbortSignal) {
   const common={countryCode:context.countryCode,locale:apiLocale(context.locale),deviceType:"DESKTOP",platform:"DESKTOP"};
@@ -74,10 +92,11 @@ export async function discover(id:string, context:{countryCode:string;locale:str
       if(!Array.isArray(items))throw new Error("Unexpected response format");
       let added=0;
       for(const item of items){const album=kind==="search"?item:item?.type==="ALBUM"?item.data:undefined;if(!album||!["string","number"].includes(typeof album.id))continue;const key=String(album.id);if(seen.has(key))continue;seen.add(key);added++;candidates.push({album,source});}
-      if(items.length<50)return;
-      if(!added){warnings.push(`${source}: repeated page; stopped early.`);return;}
+      if(items.length<50)return true;
+      if(!added){warnings.push(`${source}: repeated page; stopped early.`);return true;}
       if(page===4)warnings.push(`${source}: reached 250-item limit; more releases may exist.`);
-    }}catch(error){if(signal.aborted)throw error;warnings.push(`${source} unavailable: ${error instanceof Error?error.message:"request failed"}`);}
+    }}catch(error){if(signal.aborted)throw error;warnings.push(`${source} unavailable: ${error instanceof Error?error.message:"request failed"}`);return false;}
+    return true;
   }
   await Promise.all([
     (async()=>{try{
@@ -85,7 +104,20 @@ export async function discover(id:string, context:{countryCode:string;locale:str
       for(const album of nativeVersions(page))candidates.push({album,source:"TIDAL Other Versions"});
     }catch(error){if(signal.aborted)throw error;warnings.push(`TIDAL Other Versions unavailable: ${error instanceof Error?error.message:"request failed"}`);}})(),
     pages("Search","v2/search/",{query,types:"ALBUMS",includeContributors:"true",includeDidYouMean:"true",includeUserPlaylists:"true",supportsUserData:"true"},"search"),
-    (async()=>{for(const artist of artists.slice(0,3))await pages(`Artist Albums (${artist.name??artist.id})`,"v2/artist/ARTIST_ALBUMS/view-all",{artistId:String(artist.id)},"artist");if(artists.length>3)warnings.push("Only the first three credited artists were queried.");})()
+    (async()=>{
+      for(const artist of artists.slice(0,3)){
+        const complete=await pages(`Artist Albums (${artist.name??artist.id})`,"v2/artist/ARTIST_ALBUMS/view-all",{artistId:String(artist.id)},"artist");
+        if(!complete){
+          try{
+            const data=await request(url(`v2/artist/${artist.id}`,common),signal);
+            const albums=artistPageAlbums(data);
+            for(const album of albums)candidates.push({album,source:`Artist page (${artist.name??artist.id})`});
+            warnings.push(`Artist page fallback returned ${albums.length} album(s); it may omit releases from the full list.`);
+          }catch(error){if(signal.aborted)throw error;warnings.push(`Artist page fallback unavailable: ${error instanceof Error?error.message:"request failed"}`);}
+        }
+      }
+      if(artists.length>3)warnings.push("Only the first three credited artists were queried.");
+    })()
   ]);
   if(signal.aborted)throw new DOMException("Cancelled","AbortError");
     const rows=mergeReleases(seed,candidates);

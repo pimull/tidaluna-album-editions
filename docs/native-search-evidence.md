@@ -36,3 +36,13 @@ The inspected public client bundle uses the v2 API gateway for search and artist
 The client dispatches router/PUSH with string routes. The plugin now dispatches /album/{id}. The album route and Luna albumItems helper both use pages/album; Luna describes rows/modules/pagedList.items. The adapter requests en_US and selects the ALBUM_LIST titled Other versions. That label/shape still requires live acceptance; mock fixtures are not live evidence. Native associations bypass suffix filtering; other modules are excluded.
 
 The built-bundle lifecycle test checks the exported unload Set, timer/listener cleanup and absence of a competing onUnload hook. Metadata enrichment supplies counts and quality when returned, without inferring bit depth or sample rate. No further desktop interaction is performed following the user's request to test independently.
+
+## AVB-006.2
+
+User testing confirmed native versions work across several albums, but artist view-all still returns HTTP 400 and unlinked Currents remains unresolved in-client. The locale change alone did not fix that error.
+
+Spatial labels now use both mediaMetadata.tags and audioModes. LOW/HIGH alone no longer become a misleading quality label. Lossless is cyan (#33ffee), Hi-Res lossless yellow (#ffd432), and Atmos blue (#6ab5ff), matching Luna Quality colors. A lossless badge does not assert 16-bit/44.1 kHz CD resolution. No Atmos filtering or MQA inference was added.
+
+If artist view-all fails, discovery fetches the client's v2 artist page and reads typed ALBUM entries from supported list/card modules. Results are labelled Artist page; the original error and partial coverage notice remain visible. This is a fallback, not a claimed fix to the underlying HTTP 400. Mock tests verify both Currents directions without native associations, source isolation, failure and cancellation. Live fallback availability is pending user testing.
+
+Exact sample rate and bit depth remain unavailable in this UI. Local Luna MediaItem source separates metadata qualityTags from playbackInfo/updateFormat (which may parse stream data); no playback or stream probing was introduced. Tidal Tags uses the same Luna qualityTags mechanism: https://github.com/Inrixia/luna-plugins/blob/master/plugins/TidalTags/src/setQualityTags.ts

@@ -28,3 +28,7 @@ Internal client endpoints and navigation actions are compatibility dependencies.
 AVB-006 found Abbey Road versions in user testing. AVB-006.1 passes local discovery, navigation and built-bundle lifecycle tests. Its native source adapter, artist HTTP 400 correction and navigation still require installed-client verification. Repository-wide type checking fails in upstream dependencies and legacy diagnostic files; the build and current targeted tests pass. Earlier diagnostic UI smoke tests target obsolete milestones.
 
 Acceptance: reload, open Let It Be (2021 Mix), compare official versions with source-labelled cards, open an alternative inside TIDAL and check track counts/quality. Repeat with Currents and Abbey Road. Results do not prove identical audio or complete catalog coverage.
+
+## AVB-006.2 update
+
+Format badges now recognize Atmos metadata before interpreting generic quality fields, with cyan Lossless, yellow Hi-Res and blue Atmos labels. Exact bit depth/sample rate and CD resolution remain unconfirmed. Artist view-all HTTP errors now trigger a source-labelled artist-page fallback; errors and incomplete coverage stay visible. This fallback uses the inspected client getArtistPageById endpoint and TI list shapes, and awaits installed-client verification. Current tests include unlinked Currents fixtures in both directions and format/color regressions.

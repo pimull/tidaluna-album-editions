@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import {baseTitle,mergeReleases,discover,nativeVersions,apiLocale,audioSummary,displayTitle} from "../plugins/Example/src/discovery.ts";
+import {baseTitle,mergeReleases,discover,nativeVersions,apiLocale,audioSummary,audioBadges,displayTitle,artistPageAlbums} from "../plugins/Example/src/discovery.ts";
 const album=(id:number,title="Currents",artist=7)=>({id,title,artists:[{id:artist,name:"Tame Impala"}],numberOfTracks:13});
 for(const title of ["Rubber Soul (2026 Mix)","Rubber Soul (Remastered 2009)","Rubber Soul (Super Deluxe Edition)","Rubber Soul - 2009 Remaster"] )assert.equal(baseTitle(title),"rubber soul");
 assert.equal(baseTitle("The Dark Side Of The Moon (50th Anniversary; 2023 Remaster)"),"the dark side of the moon");
@@ -40,3 +40,50 @@ assert.equal(nativeResult.rows.length,3);
 assert.ok(nativeResult.rows.find(r=>r.album.id===2)?.sources.includes("TIDAL Other Versions"));
 assert.equal(nativeResult.warnings.length,0);
 console.log("PASS: native versions, metadata, locale and title display.");
+
+assert.equal(audioSummary({...seed,audioQuality:"LOW",mediaMetadata:{tags:["DOLBY_ATMOS"]}}),"Dolby Atmos · TIDAL metadata");
+assert.equal(audioSummary({...seed,audioQuality:"LOW",audioModes:["DOLBY_ATMOS"]}),"Dolby Atmos · TIDAL metadata");
+assert.equal(audioSummary({...seed,audioQuality:"LOW"}),"Audio specification not confirmed");
+assert.equal(audioSummary({...seed,audioQuality:"HIGH"}),"Audio specification not confirmed");
+assert.equal(audioSummary({...seed,audioQuality:"LOSSLESS",audioModes:["DOLBY_ATMOS"]}),"Dolby Atmos + Lossless · TIDAL metadata");
+const artistPage={items:[{type:"HORIZONTAL_LIST",items:[{type:"ALBUM",data:alt},{type:"TRACK",data:seed}]},{type:"UNKNOWN",items:[{type:"ALBUM",data:seed}]}]};
+assert.deepEqual(artistPageAlbums(artistPage),[alt]);
+const fallback=await discover("1",{countryCode:"CA",locale:"en-us"},async u=>{
+  if(u.includes('/view-all'))throw Error('HTTP 400');
+  if(new URL(u).pathname==='/v2/artist/7')return artistPage;
+  return request(u);
+},new AbortController().signal);
+assert.equal(fallback.rows.length,2);
+assert.deepEqual(fallback.rows[1].sources,["Artist page (Tame Impala)"]);
+assert.ok(fallback.warnings.some(w=>w.includes('HTTP 400')));
+assert.ok(fallback.warnings.some(w=>w.includes('fallback returned 1')));
+// Currents: neither native associations nor search contains the artist-page edition.
+for(const seedId of [47696788,77699617]){
+ const releases=[album(47696788),album(77699617)];
+ const result=await discover(String(seedId),{countryCode:"CA",locale:"en-us"},async u=>{
+   const path=new URL(u).pathname;
+   if(path.startsWith('/v1/albums/'))return releases.find(a=>String(a.id)===path.split('/').pop());
+   if(path==='/v1/pages/album')return{rows:[]};
+   if(path==='/v2/search/')return{albums:{items:[releases[0]]}};
+   if(path.includes('/view-all'))throw Error('HTTP 400');
+   if(path==='/v2/artist/7')return{items:[{type:"HORIZONTAL_LIST_WITH_CONTEXT",items:[{type:"ALBUM",data:releases[1]}]}]};
+   throw Error('Unexpected endpoint');
+ },new AbortController().signal);
+ assert.deepEqual(new Set(result.rows.map(r=>r.album.id)),new Set([47696788,77699617]));
+ assert.equal(result.rows.filter(r=>r.current).length,1);
+}
+const failed=await discover("1",{countryCode:"CA",locale:"en-us"},async u=>{if(u.includes('/v2/artist/'))throw Error('HTTP 400');return request(u);},new AbortController().signal);
+assert.equal(failed.rows.length,1);
+assert.ok(failed.warnings.some(w=>w.includes('fallback unavailable')));
+const aborted=new AbortController();
+await assert.rejects(()=>discover("1",{countryCode:"CA",locale:"en-us"},async u=>{
+ if(u.includes('/view-all'))throw Error('HTTP 400');
+ if(new URL(u).pathname==='/v2/artist/7'){aborted.abort();throw new DOMException('Cancelled','AbortError');}
+ return request(u);
+},aborted.signal),/Cancelled/);
+console.log("PASS: spatial format precedence, artist-page fallback, Currents discovery in both directions, failure and cancellation.");
+
+assert.deepEqual(audioBadges({...seed,audioQuality:"LOSSLESS"}),[{label:"Lossless",color:"#33ffee"}]);
+assert.deepEqual(audioBadges({...seed,audioQuality:"HI_RES_LOSSLESS"}),[{label:"Hi-Res lossless",color:"#ffd432"}]);
+assert.deepEqual(audioBadges({...seed,audioModes:["DOLBY_ATMOS"],audioQuality:"LOW"}),[{label:"Dolby Atmos",color:"#6ab5ff"}]);
+console.log("PASS: lossless cyan, Hi-Res yellow, Atmos blue without claiming CD resolution.");

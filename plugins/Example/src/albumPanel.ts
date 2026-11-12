@@ -1,6 +1,6 @@
 import type { LunaUnload } from "@luna/core";
 import { currentAlbumId, openAlbumInClient } from "./navigation";
-import { discover, audioSummary, displayTitle } from "./discovery";
+import { discover, audioBadges, displayTitle } from "./discovery";
 export const unloads=new Set<LunaUnload>();
 let disposed=false, controller:AbortController|undefined;
 const host=document.createElement("div");
@@ -16,7 +16,7 @@ panel.style.cssText="position:fixed;right:24px;top:70px;bottom:110px;width:min(6
 let activeId="", renderedId="";
 const el=(tag:string,text?:string)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};
 function close(){controller?.abort();panel.style.display="none";button.focus();}
-function header(){panel.replaceChildren();const closeButton=el("button","Close ×") as HTMLButtonElement;closeButton.style.cssText="float:right;color:white;background:#333;border:1px solid #777;border-radius:6px;padding:6px 12px;cursor:pointer";closeButton.onclick=close;panel.append(closeButton,el("h2","Related album versions"),el("p","AVB-006.1 · Other Versions + Search + Artist Albums"));closeButton.focus();}
+function header(){panel.replaceChildren();const closeButton=el("button","Close ×") as HTMLButtonElement;closeButton.style.cssText="float:right;color:white;background:#333;border:1px solid #777;border-radius:6px;padding:6px 12px;cursor:pointer";closeButton.onclick=close;panel.append(closeButton,el("h2","Related album versions"),el("p","AVB-006.2 · Other Versions + Search + Artist Albums"));closeButton.focus();}
 function note(text:string){const p=el("p",text);panel.append(p);return p;}
 const currentId=currentAlbumId;
 async function open(){
@@ -46,7 +46,11 @@ async function open(){
       const artist=(row.album.artists??(row.album.artist?[row.album.artist]:[])).map(a=>a.name).filter(Boolean).join(", ");
       body.append(el("p",artist),el("p",`${row.album.releaseDate??"Date unknown"} · ${row.album.numberOfTracks??"?"} tracks`));
       if(row.current){const badge=el("strong","Current album");badge.style.color="#9fe8d2";body.append(badge);}
-      body.append(el("p",audioSummary(row.album)),el("small","Bit depth / sample rate: not provided by album metadata"));
+      const formats=el("p");formats.style.cssText="display:flex;gap:8px;flex-wrap:wrap";
+      const badges=audioBadges(row.album);
+      for(const badge of badges){const tag=el("span",badge.label);tag.style.cssText=`color:${badge.color};background:#24242c;border:1px solid currentColor;border-radius:5px;padding:3px 7px;font:600 13px system-ui`;tag.setAttribute("title","TIDAL album metadata; not a measured playback specification");formats.append(tag);}
+      if(!badges.length)formats.textContent="Audio specification not confirmed";
+      body.append(formats,el("small","Exact bit depth / sample rate unavailable for this album"));
       body.append(el("p",`Sources: ${row.sources.join(" + ")}`),el("small",`${row.reason} · ID ${row.album.id}`));
       const link=document.createElement("button");link.textContent=row.current?"Current album":"Open in TIDAL";link.disabled=row.current;link.style.cssText="display:block;color:#d7edff;background:#303846;border:1px solid #7c91a8;border-radius:6px;padding:8px 12px;margin-top:12px;cursor:pointer";link.onclick=()=>{try{openAlbumInClient(redux.store.dispatch.bind(redux.store),row.album.id);close();}catch{note("Could not navigate inside TIDAL.");}};body.append(link);card.append(body);panel.append(card);
     }
