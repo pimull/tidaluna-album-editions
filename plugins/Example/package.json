@@ -1,6 +1,6 @@
 {
   "name": "album-version-browser",
-  "description": "Album Version Browser — search observation test AVB-005. Automatic search and grouping are not implemented yet.",
+  "description": "AVB-006.1 — Find related editions from an album page. Automatic search and artist discovery.",
   "main": "./src/index.ts",
   "type": "module"
 }

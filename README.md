@@ -1,83 +1,30 @@
-# Luna Plugins
+# Album Version Browser
 
-This is a template & example of how to develop **[Tidal Luna](https://github.com/Inrixia/TidaLuna)** plugins.
+A TidaLuna album-version browser based on the official [Luna template](https://github.com/Inrixia/luna-template).
 
-## Getting Started
+## AVB-006.1
 
-Follow these steps to create your own Luna plugin using this template:
+Open an album in the TIDAL desktop client and click **Versions**. No pasted IDs or manual search is required. **Open in TIDAL** uses client navigation without starting playback.
 
-### 1. Clone the Repository
+Sources: current album, native Other Versions, album search, and artist Albums lists. Results are deduplicated by album ID. Native associations bypass title heuristics; other matches require a shared artist ID and a conservatively normalized title. Remaster, mix and deluxe suffixes are supported; B-sides and live recordings are not stripped indiscriminately.
 
-```sh
-git clone https://github.com/Inrixia/luna-template.git luna-plugins
-cd luna-plugins
-```
+Cards display release date, track count and available quality metadata. Bit depth and sample rate are not inferred. MQA identification and Atmos filters are not implemented.
 
-### 2. Install Node.js (if missing)
-
-If you don't have Node.js installed, use [nvm](https://github.com/nvm-sh/nvm):
+## Development
 
 ```sh
-nvm install node
-nvm use node
+pnpm install --frozen-lockfile
+pnpm run build
+pnpm test
+pnpm run serve
 ```
 
-> This will install and use the latest Node.js version.
+Use the Luna DEV store on port 3000. Reuse an existing server and reload the plugin after building. Source remains in `plugins/Example` from the template.
 
-### 3. Enable pnpm via Corepack
+## Limits and acceptance
 
-[Corepack](https://nodejs.org/api/corepack.html) is included with Node.js 16.10+.
+Internal client endpoints and navigation actions are compatibility dependencies. Each search/artist source is capped at 250 items; only three credited artists and 30 alternative detail requests are supported. Source errors remain visible. Native discovery reads the returned page's English Other versions module; hidden/paginated modules and server label/schema changes can limit coverage. Requests use the signed-in client's region and in-memory authentication, never stored or logged. No collection mutations occur.
 
-```sh
-corepack enable
-corepack prepare pnpm@latest --activate
-```
+AVB-006 found Abbey Road versions in user testing. AVB-006.1 passes local discovery, navigation and built-bundle lifecycle tests. Its native source adapter, artist HTTP 400 correction and navigation still require installed-client verification. Repository-wide type checking fails in upstream dependencies and legacy diagnostic files; the build and current targeted tests pass. Earlier diagnostic UI smoke tests target obsolete milestones.
 
-### 4. Install Dependencies
-
-```sh
-pnpm install
-```
-
-### 5. Start Developing
-
-- Edit files in the `plugins/Example` directory to build your plugin.
-- Use `pnpm run watch` to build and serve with hot reload.
-
-> While developing, you can install and test your plugin via the _DEV_ store that should appear under **Plugin Store** in **Luna Settings**  
-> ![image](https://github.com/user-attachments/assets/c159bf00-6feb-41c8-8884-3d9e63070c19)
-
-### 6. Update the README
-
-Replace this README with information about your plugin:
-
-- What it does
-- How to use it
-- Any configuration or setup steps
-
-### 7. GitHub Actions: Workflow Permissions
-
-If you want to use the included GitHub Action in (`.github`) to automatically create releases, you must set your repository workflow permissions to **Read and write permissions**:
-
-1. Go to your repository's settings: `Settings > Actions > General` https://github.com/.../.../settings/actions
-1. Under **Workflow permissions**, select **Read and write permissions**.
-1. Click **Save**.
-
-This allows the GitHub Action to create releases on your behalf.
-
-### 8. Install your plugins from GitHub
-
-After your action has build the plugins, you can install from the releases page.
-For example for **@luna/example**  
-https://github.com/.../.../releases/download/latest/luna.example
-
-Or install the store with
-https://github.com/.../.../releases/download/latest/store.json
-
-### 9. PR [TidaLuna](https://github.com/Inrixia/TidaLuna) to add your store
-
-You can open a PR to add your store url to the default stores in client if youd like <3
-
----
-
-For more details, see the [Tidal Luna documentation](https://github.com/Inrixia/TidaLuna).
+Acceptance: reload, open Let It Be (2021 Mix), compare official versions with source-labelled cards, open an alternative inside TIDAL and check track counts/quality. Repeat with Currents and Abbey Road. Results do not prove identical audio or complete catalog coverage.

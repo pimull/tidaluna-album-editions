@@ -28,3 +28,11 @@ On 2026-11-12 the public desktop HTML still referenced index-DnY8hG-p.js. Inspec
 AVB-004 reads fulfilled tidalApi.queries entries only when endpointName is getArtistViewAllPage, originalArgs.artistId matches the seed artist, and sourceType is ARTIST_ALBUMS. RTK Query cache layout is an internal compatibility assumption requiring client verification. Unsupported/missing cache is reported explicitly.
 
 TidalApi.album(47696788) supplies artist identity only. Neither seed album nor the other known ID is inserted into results. Album membership comes solely from typed ALBUM items in that artist's list; global content.albums may supply a title only after list membership is established. Results are labelled Artist Albums and kept separate from search. No dispatch, playback, collection mutation, direct artist endpoint request, or automatic pagination is performed.
+
+## AVB-006.1 evidence and validation
+
+The inspected public client bundle uses the v2 API gateway for search and artist view-all. Its DP context builder calls pP to convert en-us to en_US; the plugin now follows that conversion to address the artist HTTP 400. Resolution remains pending user verification.
+
+The client dispatches router/PUSH with string routes. The plugin now dispatches /album/{id}. The album route and Luna albumItems helper both use pages/album; Luna describes rows/modules/pagedList.items. The adapter requests en_US and selects the ALBUM_LIST titled Other versions. That label/shape still requires live acceptance; mock fixtures are not live evidence. Native associations bypass suffix filtering; other modules are excluded.
+
+The built-bundle lifecycle test checks the exported unload Set, timer/listener cleanup and absence of a competing onUnload hook. Metadata enrichment supplies counts and quality when returned, without inferring bit depth or sample rate. No further desktop interaction is performed following the user's request to test independently.
