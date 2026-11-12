@@ -38,3 +38,7 @@ Format badges now recognize Atmos metadata before interpreting generic quality f
 Click **Read first-track specs** on a stereo release to request its first track's exact lossless playback metadata. Playback is not started and audio is not downloaded. The returned sample rate and bit depth apply only to that track and stream. Missing fields or a spatial/lossy fallback do not become invented specifications. CD resolution requires 16-bit/44.1 kHz. This optional feature has mock regression coverage and awaits user testing.
 
 The main button is now English-only. Artist HTTP 400 and the missing Currents version remain unresolved in user testing. A limited API error description is now shown if available; the fallback is not claimed as a verified solution.
+
+## AVB-006.4 update
+
+First-track resolution loads automatically (two concurrent requests, 30 releases maximum). Other Versions links are followed across matched editions, up to 12 additional pages, to reduce differences between entry points. The panel closes on outside click or Escape and keeps Close visible while scrolling. Closing cancels pending metadata work. Artist HTTP 400/code 1002 and the unlinked Currents case remain unresolved; association traversal does not fix the artist endpoint. Build and regression tests pass; installed-client acceptance remains pending.

@@ -28,3 +28,11 @@ export function requestError(status:number,body:any){
   const safe=message.length<=180&&!/bearer|token|https?:|@|[A-Za-z0-9_=-]{40}/i.test(message)?message:'';
   return `HTTP ${status}${code}${safe?`: ${safe}`:''}`;
 }
+
+// Start at most two metadata probes at once. Closing the panel cancels queued work.
+export async function runSpecificationJobs(jobs:Array<()=>Promise<void>>,signal:AbortSignal){
+  let cursor=0;
+  await Promise.all(Array.from({length:Math.min(2,jobs.length)},async()=>{
+    while(!signal.aborted&&cursor<jobs.length){const job=jobs[cursor++];await job();}
+  }));
+}

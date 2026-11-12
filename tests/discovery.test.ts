@@ -13,7 +13,7 @@ assert.equal(merged.length,2);assert.equal(merged[0].current,true);assert.deepEq
 const calls:string[]=[];
 const request=async(url:string)=>{calls.push(url);const u=new URL(url);if(u.pathname.startsWith('/v1/albums/'))return u.pathname.endsWith('/2')?alt:seed;if(u.pathname==='/v1/pages/album')return{rows:[]};if(u.pathname==='/v2/search/')return{albums:{items:[seed]}};if(u.pathname==='/v2/artist/ARTIST_ALBUMS/view-all')return{items:[{type:"ALBUM",data:alt}]};throw Error('Unexpected endpoint');};
 const result=await discover("1",{countryCode:"CA",locale:"en_US"},request,new AbortController().signal);
-assert.equal(result.rows.length,2);assert.equal(result.warnings.length,0);assert.equal(calls.length,5);
+assert.equal(result.rows.length,2);assert.equal(result.warnings.length,0);assert.equal(calls.length,6);
 assert.ok(calls.every(x=>new URL(x).searchParams.get('countryCode')==='CA'));
 const partial=await discover("1",{countryCode:"CA",locale:"en_US"},async u=>{if(u.includes('/v2/search/'))throw Error('HTTP 503');return request(u);},new AbortController().signal);
 assert.equal(partial.rows.length,2);assert.match(partial.warnings[0],/Search unavailable/);
@@ -87,3 +87,35 @@ assert.deepEqual(audioBadges({...seed,audioQuality:"LOSSLESS"}),[{label:"Lossles
 assert.deepEqual(audioBadges({...seed,audioQuality:"HI_RES_LOSSLESS"}),[{label:"Hi-Res lossless",color:"#ffd432"}]);
 assert.deepEqual(audioBadges({...seed,audioModes:["DOLBY_ATMOS"],audioQuality:"LOW"}),[{label:"Dolby Atmos",color:"#6ab5ff"}]);
 console.log("PASS: lossless cyan, Hi-Res yellow, Atmos blue without claiming CD resolution.");
+// Reproduce the Moon asymmetry: search exposes stereo A/B, only B links Atmos C.
+const moon=[album(55391786,'The Dark Side of the Moon'),album(282500342,'The Dark Side Of The Moon (50th Anniversary) [2023 Remaster]'),{...album(283628182,'The Dark Side Of The Moon (50th Anniversary) [2023 Remaster]'),audioModes:['DOLBY_ATMOS']}];
+for(const start of [moon[0],moon[1]]){
+ const visits:number[]=[];
+ const found=await discover(String(start.id),{countryCode:'CA',locale:'en-us'},async u=>{
+   const url=new URL(u),path=url.pathname;
+   if(path.startsWith('/v1/albums/'))return moon.find(a=>String(a.id)===path.split('/').pop());
+   if(path==='/v2/search/')return{albums:{items:[moon[0],moon[1],album(90,'Unrelated')]}};
+   if(path.includes('/view-all'))return{items:[]};
+   if(path==='/v1/pages/album'){
+     const id=Number(url.searchParams.get('albumId'));visits.push(id);
+     const links=id===moon[1].id?[moon[0],moon[2]]:id===moon[2].id?[moon[1]]:[];
+     return{rows:[{modules:[{type:'ALBUM_LIST',title:'Other versions',pagedList:{items:links}}]}]};
+   }
+   throw Error('Unexpected endpoint');
+ },new AbortController().signal);
+ assert.deepEqual(new Set(found.rows.map(r=>r.album.id)),new Set(moon.map(a=>a.id)));
+ assert.equal(visits.length,3);assert.equal(new Set(visits).size,3);
+ assert.ok(!visits.includes(90));
+}
+let relatedRequests=0;
+const limited=await discover('1',{countryCode:'CA',locale:'en-us'},async u=>{
+ const url=new URL(u);
+ if(url.pathname==='/v1/pages/album'){relatedRequests++;const id=Number(url.searchParams.get('albumId'));return{rows:[{modules:[{type:'ALBUM_LIST',title:'Other versions',pagedList:{items:[album(id+1)]}}]}]};}
+ if(url.pathname.startsWith('/v1/albums/'))return album(Number(url.pathname.split('/').pop()));
+ if(url.pathname==='/v2/search/')return{albums:{items:[]}};
+ if(url.pathname.includes('/view-all'))return{items:[]};
+ throw Error('Unexpected endpoint');
+},new AbortController().signal);
+assert.equal(relatedRequests,13);
+assert.ok(limited.warnings.some(w=>w.includes('12-page limit')));
+console.log('PASS: Moon versions agree from either stereo edition, cyclic links deduplicate, unrelated results excluded and expansion bounded.');

@@ -56,3 +56,13 @@ The result is accepted only when track ID matches, audio mode is STEREO, quality
 Source evidence: installed `node_modules/luna/plugins/lib/src/classes/TidalApi/index.ts` playbackInfo and albumItems; `types/PlaybackInfo.ts` provides trackId, audioMode, audioQuality, bitDepth, sampleRate. MediaItem.updateFormat can also parse stream data, but this plugin intentionally does not invoke it.
 
 User testing reports artist HTTP 400 and missing Currents edition persist in AVB-006.2. No root-cause fix is claimed. Failed requests now show numeric subStatus and a short filtered userMessage for HTTP 400 when supplied by the server. Full response bodies and authentication values are not exposed. This should provide a concrete reason for the next fix. Optional specification behavior is locally tested but awaits installed-client acceptance.
+
+## AVB-006.4
+
+First-track specs load automatically after cards render, with at most two concurrent probes and a 30-release cap. Spatial cards keep their format badge rather than probing a stereo fallback. Closing or unloading aborts active requests and prevents queued probes from starting.
+
+Discovery now follows Other Versions links from matched editions, not just the starting album. Each ID is visited once; expansion is capped at 12 additional pages and three concurrent requests. This addresses asymmetry such as the Moon original finding the anniversary stereo edition, whose native list then reveals Atmos. Fixtures verify the same three IDs from either stereo starting edition, cyclic links, exclusion of unrelated search albums and the cap. Complete global equivalence is not promised: inaccessible pages, directional links, query differences and limits may still affect coverage.
+
+Click outside the panel or press Escape to close. The Close control is sticky while scrolling. Background clicks close without activating underlying controls. No TIDAL UI automation was used.
+
+The user confirmed AVB-006.3 returned 24-bit/192 kHz for the anniversary first track. Artist requests still fail with HTTP 400/subStatus 1002; its cause and the unlinked Currents case remain unresolved. AVB-006.4 passes local build/tests but awaits user acceptance.

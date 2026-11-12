@@ -120,7 +120,27 @@ export async function discover(id:string, context:{countryCode:string;locale:str
     })()
   ]);
   if(signal.aborted)throw new DOMException("Cancelled","AbortError");
-    const rows=mergeReleases(seed,candidates);
+  // Follow native links from every matched edition, not only the starting album.
+  // Bound the graph walk and visit each ID once, including cyclic native links.
+  const visited=new Set<string>([String(seed.id)]);
+  const maxRelatedPages=12;
+  let expanded=0;
+  while(!signal.aborted){
+    const next=mergeReleases(seed,candidates).map(row=>String(row.album.id)).filter(id=>!visited.has(id)).sort();
+    if(!next.length)break;
+    if(expanded>=maxRelatedPages){warnings.push("Related-version expansion reached its 12-page limit; more releases may exist.");break;}
+    const batch=next.slice(0,Math.min(3,maxRelatedPages-expanded));
+    for(const albumId of batch)visited.add(albumId);
+    expanded+=batch.length;
+    await Promise.all(batch.map(async albumId=>{
+      try{
+        const page=await request(url("v1/pages/album",{...common,albumId,locale:"en_US"}),signal);
+        for(const album of nativeVersions(page))candidates.push({album,source:"TIDAL Other Versions"});
+      }catch(error){if(signal.aborted)throw error;warnings.push(`Other Versions for album ${albumId} unavailable: ${error instanceof Error?error.message:"request failed"}`);}
+    }));
+  }
+  if(signal.aborted)throw new DOMException("Cancelled","AbortError");
+  const rows=mergeReleases(seed,candidates);
   // Search and artist cards may omit track count and audio tags. Enrich only matches.
   const pending=rows.filter(row=>!row.current).slice(0,30);
   let cursor=0,failures=0;
