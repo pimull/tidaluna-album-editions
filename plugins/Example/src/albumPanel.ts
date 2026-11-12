@@ -1,3 +1,4 @@
+import { readFirstTrackSpecification, specificationLabel, requestError } from "./specifications";
 import type { LunaUnload } from "@luna/core";
 import { currentAlbumId, openAlbumInClient } from "./navigation";
 import { discover, audioBadges, displayTitle } from "./discovery";
@@ -7,7 +8,7 @@ const host=document.createElement("div");
 const shadow=host.attachShadow({mode:"open"});
 const style=document.createElement("style");style.textContent="*{box-sizing:border-box}h2{font:700 23px/1.25 system-ui;margin:0 0 16px}h3{font:600 18px/1.35 system-ui}p{font:400 14px/1.5 system-ui;margin:8px 0}small{font:400 12px/1.5 system-ui}button{font:600 14px system-ui}img{flex-shrink:0;border-radius:6px}strong{font:600 14px system-ui}";shadow.append(style);
 const button=document.createElement("button");
-button.textContent="相关版本 · Versions";
+button.textContent="Versions";
 button.style.cssText="position:fixed;right:24px;bottom:115px;z-index:99990;padding:12px 18px;border:1px solid #aaa;border-radius:24px;background:#24242c;color:white;font:600 14px system-ui;cursor:pointer;display:none;box-shadow:0 4px 18px #0008";
 button.setAttribute("aria-label","Find related album versions");
 const panel=document.createElement("section");
@@ -16,7 +17,7 @@ panel.style.cssText="position:fixed;right:24px;top:70px;bottom:110px;width:min(6
 let activeId="", renderedId="";
 const el=(tag:string,text?:string)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};
 function close(){controller?.abort();panel.style.display="none";button.focus();}
-function header(){panel.replaceChildren();const closeButton=el("button","Close ×") as HTMLButtonElement;closeButton.style.cssText="float:right;color:white;background:#333;border:1px solid #777;border-radius:6px;padding:6px 12px;cursor:pointer";closeButton.onclick=close;panel.append(closeButton,el("h2","Related album versions"),el("p","AVB-006.2 · Other Versions + Search + Artist Albums"));closeButton.focus();}
+function header(){panel.replaceChildren();const closeButton=el("button","Close ×") as HTMLButtonElement;closeButton.style.cssText="float:right;color:white;background:#333;border:1px solid #777;border-radius:6px;padding:6px 12px;cursor:pointer";closeButton.onclick=close;panel.append(closeButton,el("h2","Related album versions"),el("p","AVB-006.3 · Other Versions + Search + Artist Albums"));closeButton.focus();}
 function note(text:string){const p=el("p",text);panel.append(p);return p;}
 const currentId=currentAlbumId;
 async function open(){
@@ -29,7 +30,7 @@ async function open(){
     const headers=await TidalApi.getAuthHeaders();
     const request=async(url:string,signal:AbortSignal)=>{
       const timeout=new AbortController();const relay=()=>timeout.abort();signal.addEventListener("abort",relay,{once:true});if(signal.aborted)timeout.abort();const timer=setTimeout(()=>timeout.abort(),20000);
-      try {const response=await fetch(url,{headers,signal:timeout.signal});if(!response.ok)throw new Error(`HTTP ${response.status}`);return await response.json();}
+      try {const response=await fetch(url,{headers,signal:timeout.signal});if(!response.ok){let body;try{body=await response.json();}catch{}throw new Error(requestError(response.status,body));}return await response.json();}
       catch(error){if(signal.aborted)throw error;if(timeout.signal.aborted)throw new Error("Request timed out");throw error;}
       finally{clearTimeout(timer);signal.removeEventListener("abort",relay);}
     };
@@ -50,11 +51,28 @@ async function open(){
       const badges=audioBadges(row.album);
       for(const badge of badges){const tag=el("span",badge.label);tag.style.cssText=`color:${badge.color};background:#24242c;border:1px solid currentColor;border-radius:5px;padding:3px 7px;font:600 13px system-ui`;tag.setAttribute("title","TIDAL album metadata; not a measured playback specification");formats.append(tag);}
       if(!badges.length)formats.textContent="Audio specification not confirmed";
-      body.append(formats,el("small","Exact bit depth / sample rate unavailable for this album"));
+      body.append(formats);
+      if(!badges.some(b=>b.label==="Dolby Atmos"||b.label==="Sony 360 Reality Audio")){
+        const specButton=el("button","Read first-track specs") as HTMLButtonElement;
+        specButton.style.cssText="display:block;color:#ddd;background:#303038;border:1px solid #777;border-radius:5px;padding:6px 10px;cursor:pointer";
+        const specStatus=el("p");specStatus.setAttribute("role","status");
+        specButton.onclick=async()=>{
+          specButton.disabled=true;specStatus.textContent="Reading first-track metadata…";
+          try{
+            const spec=await readFirstTrackSpecification(String(row.album.id),state.session.countryCode,request,signal);
+            if(signal.aborted||disposed)return;
+            specStatus.textContent=specificationLabel(spec);
+            specStatus.style.color=spec.bitDepth>16||spec.sampleRate>44100?"#ffd432":"#33ffee";
+            specStatus.setAttribute("title",spec.title+" · Other tracks may differ. This is the returned stream, not a playback measurement.");
+            specButton.textContent="Specs loaded";
+          }catch(error){if(signal.aborted||disposed)return;specStatus.textContent=error instanceof Error?error.message:"Specification unavailable";specButton.disabled=false;}
+        };
+        body.append(specButton,specStatus);
+      }
       body.append(el("p",`Sources: ${row.sources.join(" + ")}`),el("small",`${row.reason} · ID ${row.album.id}`));
       const link=document.createElement("button");link.textContent=row.current?"Current album":"Open in TIDAL";link.disabled=row.current;link.style.cssText="display:block;color:#d7edff;background:#303846;border:1px solid #7c91a8;border-radius:6px;padding:8px 12px;margin-top:12px;cursor:pointer";link.onclick=()=>{try{openAlbumInClient(redux.store.dispatch.bind(redux.store),row.album.id);close();}catch{note("Could not navigate inside TIDAL.");}};body.append(link);card.append(body);panel.append(card);
     }
-    note("Coverage is limited to returned pages and query limits. Community format labels are not included.");
+    note("First-track specs describe the returned stereo stream; other tracks may differ. Coverage is limited to queried sources.");
   }catch(error){if(!signal.aborted&&!disposed&&controller===run)progress.textContent=`Unable to load versions: ${error instanceof Error?error.message:"unknown error"}`;}
   finally{if(controller===run)button.disabled=false;}
 }

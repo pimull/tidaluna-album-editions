@@ -32,3 +32,9 @@ Acceptance: reload, open Let It Be (2021 Mix), compare official versions with so
 ## AVB-006.2 update
 
 Format badges now recognize Atmos metadata before interpreting generic quality fields, with cyan Lossless, yellow Hi-Res and blue Atmos labels. Exact bit depth/sample rate and CD resolution remain unconfirmed. Artist view-all HTTP errors now trigger a source-labelled artist-page fallback; errors and incomplete coverage stay visible. This fallback uses the inspected client getArtistPageById endpoint and TI list shapes, and awaits installed-client verification. Current tests include unlinked Currents fixtures in both directions and format/color regressions.
+
+## AVB-006.3 update
+
+Click **Read first-track specs** on a stereo release to request its first track's exact lossless playback metadata. Playback is not started and audio is not downloaded. The returned sample rate and bit depth apply only to that track and stream. Missing fields or a spatial/lossy fallback do not become invented specifications. CD resolution requires 16-bit/44.1 kHz. This optional feature has mock regression coverage and awaits user testing.
+
+The main button is now English-only. Artist HTTP 400 and the missing Currents version remain unresolved in user testing. A limited API error description is now shown if available; the fallback is not claimed as a verified solution.

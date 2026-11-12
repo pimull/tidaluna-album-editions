@@ -46,3 +46,13 @@ Spatial labels now use both mediaMetadata.tags and audioModes. LOW/HIGH alone no
 If artist view-all fails, discovery fetches the client's v2 artist page and reads typed ALBUM entries from supported list/card modules. Results are labelled Artist page; the original error and partial coverage notice remain visible. This is a fallback, not a claimed fix to the underlying HTTP 400. Mock tests verify both Currents directions without native associations, source isolation, failure and cancellation. Live fallback availability is pending user testing.
 
 Exact sample rate and bit depth remain unavailable in this UI. Local Luna MediaItem source separates metadata qualityTags from playbackInfo/updateFormat (which may parse stream data); no playback or stream probing was introduced. Tidal Tags uses the same Luna qualityTags mechanism: https://github.com/Inrixia/luna-plugins/blob/master/plugins/TidalTags/src/setQualityTags.ts
+
+## AVB-006.3: optional first-track specifications
+
+The Versions button and settings instructions are English-only. Stereo release cards offer **Read first-track specs**. This requests the album page's first track and the same playbackinfo endpoint/parameters used by the installed Luna TidalApi.playbackInfo helper. It does not dispatch playback, parse or retrieve the audio manifest URLs, or download audio. The country code comes from the active session rather than Luna albumItems' hardcoded NZ helper URL.
+
+The result is accepted only when track ID matches, audio mode is STEREO, quality is lossless, and bit depth/sample rate are plausible numeric values. Spatial cards do not offer this stereo probe. The displayed specification is explicitly for the first track and returned stream, not the entire album, maximum catalog capability, or a measured playback. Other tracks can differ. CD resolution requires exactly 16-bit/44100 Hz; lossless metadata alone is insufficient. Missing or downgraded responses stay unknown.
+
+Source evidence: installed `node_modules/luna/plugins/lib/src/classes/TidalApi/index.ts` playbackInfo and albumItems; `types/PlaybackInfo.ts` provides trackId, audioMode, audioQuality, bitDepth, sampleRate. MediaItem.updateFormat can also parse stream data, but this plugin intentionally does not invoke it.
+
+User testing reports artist HTTP 400 and missing Currents edition persist in AVB-006.2. No root-cause fix is claimed. Failed requests now show numeric subStatus and a short filtered userMessage for HTTP 400 when supplied by the server. Full response bodies and authentication values are not exposed. This should provide a concrete reason for the next fix. Optional specification behavior is locally tested but awaits installed-client acceptance.

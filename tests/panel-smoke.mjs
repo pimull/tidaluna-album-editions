@@ -23,6 +23,7 @@ assert.equal(plugin.onUnload,undefined,'Only the unload set owns cleanup');
 assert.equal(document.body.children.length,1);
 const shadow=document.body.children[0].shadow;
 assert.ok(shadow.children.some(n=>n.tag==='button'&&n.style.display==='block'));
+assert.ok(shadow.children.some(n=>n.tag==='button'&&n.textContent==='Versions'));
 assert.equal(timers.size,1);
 for(const cleanup of plugin.unloads)await cleanup();
 assert.equal(document.body.children.length,0);
