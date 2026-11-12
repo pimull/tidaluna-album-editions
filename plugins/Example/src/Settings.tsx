@@ -1,4 +1,5 @@
 import React from "react";
+import { CandidateBrowser } from "./CandidateBrowser";
 import { ArtistProbe } from "./ArtistProbe";
 import { SearchProbe } from "./SearchProbe";
 import type { TidalApi } from "@luna/lib";
@@ -47,7 +48,8 @@ export const Settings = () => {
   return (
     <LunaSettings>
       <section style={{ padding: 16 }}>
-        <h2>Album Version Browser — AVB-004</h2>
+        <h2>Album Version Browser — AVB-005</h2>
+        <CandidateBrowser />
         <SearchProbe />
         <ArtistProbe />
         <h3>Known album lookup (separate from search results)</h3>

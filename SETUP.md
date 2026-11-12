@@ -187,3 +187,15 @@ The old development server was unavailable; a serve-only process was started on 
 ## AVB-004 verified in client
 
 The user's screenshot confirms artist 3736815, one matching list and five albums, with Currents 77699617 present and 47696788 absent from this observed list. Artist-source extraction is accepted; source coverage is not guaranteed exhaustive. No code changed after acceptance, so build tests were not repeated. See docs/currents-test-case.md for observed IDs and the next bounded milestone.
+
+## AVB-005: Candidate cards (client acceptance pending)
+
+Added a generic starting-album link/ID input and exact native search phrase input. The new panel reads the corresponding loaded search list and loaded ARTIST_ALBUMS lists for the starting album's artist IDs. It deduplicates by album ID, retains both source labels, and displays cover, original title/version, date, track count, ID and an ordinary TIDAL link. Cover URLs use the source-verified ContentBase.formatCoverUrl helper.
+
+Only explicit source membership admits an ID; the seed lookup supplies matching metadata and never inserts itself. Global album cache supplies metadata only for admitted IDs. Candidates must share an artist ID and match the title after NFKC, whitespace and case normalization. Unknown metadata is counted. The UI reports missing source caches and partial coverage. No fixed Currents IDs are present in the generic collector/panel. Existing diagnostic panels remain below it for troubleshooting.
+
+Scope limitations: manually load both native source pages, then supply the exact query; no automated fetching/pagination, persistence, Other Versions integration, suffix normalization, audio equivalence, MQA or Atmos feature. Different mix/deluxe titles are deliberately not grouped yet. This is the candidate-list milestone, not the finished one-click plugin.
+
+Validation passed: build, existing settings/search/artist regression tests, new candidate tests (deduplication, combined provenance, same-title wrong-artist exclusion, derivative-title exclusion, no seed injection, whitespace/case handling, URL validation), and HTTP AVB-005 marker. Visual rendering and combined real-client results remain pending.
+
+Acceptance: reload AVB-005, search Currents Tame Impala in TIDAL and open Albums results, visit Tame Impala Albums, then promptly return. Enter 47696788 and the exact search phrase, click Show candidate versions. Expected from previous source tests: 47696788 labelled Search and 77699617 labelled Artist Albums. Availability/cache expiry may affect this; report source status if a card is missing. Do not run another build milestone until this is verified.

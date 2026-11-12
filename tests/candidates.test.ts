@@ -1,0 +1,17 @@
+import assert from "node:assert/strict";
+import { collectCandidates,parseAlbumId } from "../plugins/Example/src/candidates.ts";
+const album=(id:number,title="Currents",artistId=7)=>({id,title,artists:[{id:artistId,name:"Artist"}],numberOfTracks:13});
+const seed=album(1), other=album(2), unrelated=album(3,"Currents B-Sides & Remixes"), wrongArtist=album(4,"Currents",8);
+const state={content:{albums:{1:seed,2:other,3:unrelated,4:wrongArtist},albumLists:{"search/albums/Currents":{sorted:{defaultSort:{items:[1,3,4]}}}}},tidalApi:{queries:{x:{endpointName:"getArtistViewAllPage",status:"fulfilled",originalArgs:{artistId:7,sourceType:"ARTIST_ALBUMS"},data:{items:[1,2].map(id=>({type:"ALBUM",data:{id}}))}}}}};
+const r=collectCandidates(state,seed,"Currents");
+assert.deepEqual(r.rows.map(r=>r.id),["1","2"]);
+assert.deepEqual(r.rows[0].sources,["Search","Artist Albums"]);
+assert.deepEqual(r.rows[1].sources,["Artist Albums"]);
+assert.equal(collectCandidates({content:{albums:{1:seed}}},seed,"none").rows.length,0,"Seed is not inserted as discovered result");
+assert.equal(collectCandidates(state,{...seed,title:" CURRENTS "},"Currents").rows.length,2);
+assert.equal(collectCandidates(state,album(9,"Currents (Deluxe)"),"Currents").rows.length,0,"Suffix matching is explicitly out of scope");
+assert.equal(parseAlbumId("https://tidal.com/album/123/u"),"123");
+assert.equal(parseAlbumId("123"),"123");
+assert.equal(parseAlbumId("https://evil.test/album/123"),undefined);
+assert.equal(parseAlbumId("https://tidal.com/track/123"),undefined);
+console.log("PASS: candidate deduplication, provenance, artist/title filtering, no seeded discovery and link validation.");

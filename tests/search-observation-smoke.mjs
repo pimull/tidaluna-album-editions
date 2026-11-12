@@ -25,7 +25,7 @@ assert.ok(plugin.unloads instanceof Set, "Luna must be able to drain exported cl
 const hostUnloads = plugin.unloads;
 if (plugin.onUnload) hostUnloads.add(plugin.onUnload);
 function find(node, test) { if (test(node)) return node; return node?.children?.flat(Infinity).map(child => find(child, test)).find(Boolean); }
-const probe = find(plugin.Settings(), node => typeof node?.type === "function").type;
+const probe = find(plugin.Settings(), node => typeof node?.type === "function" && Boolean(find(node.type(), child => child?.type === "button" && child.children.includes("Start / reset observation")))).type;
 const start = find(probe(), node => node?.type === "button" && node.children.includes("Start / reset observation"));
 await start.props.onClick();
 assert.equal(registrations, 1);
