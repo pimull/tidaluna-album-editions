@@ -175,3 +175,11 @@ Replaced speculative top-level result reading with the actual query-specific alb
 ## AVB-003-fix3 client acceptance
 
 User screenshots confirm 50 search albums extracted, including 47696788, with 77699617 not observed. The native search observation milestone is accepted. Automatic search execution, exhaustive pagination, artist-list retrieval, and grouping are not verified. Artist-list discovery is the next bounded milestone; see docs/currents-test-case.md. No implementation changed, so build checks were not repeated.
+
+## AVB-004: Artist Albums cache reader (client verification pending)
+
+Added an Artist Albums source panel with manual read button. Visit Tame Impala's artist page and Albums section, then return and read. The existing verified search observer and known-ID lookup remain separate. The artist identity seed is 47696788; list results are not hard-coded. A missing list prompts visiting/reopening the artist page. Coverage is not guaranteed complete.
+
+Validation: build, settings smoke, search observer smoke, pure artist-cache tests, and HTTP AVB-004 marker passed. Artist-cache tests verify artist/source isolation, no seeded membership, deduplication, missing and pending cache, malformed items, and 50-item truncation notice. Source title mapping was checked against the public client's SI adapter. Public HTML still references the inspected bundle.
+
+The old development server was unavailable; a serve-only process was started on port 3000. No client verification or discovery of 77699617 is claimed yet. Next acceptance: screenshot of Artist Albums source including artist ID, matched-list count, and both target ID indicators. Do not proceed to grouping before verification.

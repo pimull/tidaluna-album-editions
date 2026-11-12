@@ -1,4 +1,5 @@
 import React from "react";
+import { ArtistProbe } from "./ArtistProbe";
 import { SearchProbe } from "./SearchProbe";
 import type { TidalApi } from "@luna/lib";
 import { LunaSettings } from "@luna/ui";
@@ -46,8 +47,9 @@ export const Settings = () => {
   return (
     <LunaSettings>
       <section style={{ padding: 16 }}>
-        <h2>Album Version Browser — AVB-003-fix3</h2>
+        <h2>Album Version Browser — AVB-004</h2>
         <SearchProbe />
+        <ArtistProbe />
         <h3>Known album lookup (separate from search results)</h3>
         <button type="button" disabled={loading} onClick={loadAlbums}>
           {loading ? "Reading albums..." : "Read two test albums"}

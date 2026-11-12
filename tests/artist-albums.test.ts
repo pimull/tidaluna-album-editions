@@ -1,0 +1,12 @@
+import assert from "node:assert/strict";
+import { readArtistAlbums } from "../plugins/Example/src/artistAlbums.ts";
+const entry = (artistId: number, sourceType: string, ids: number[]) => ({ endpointName: "getArtistViewAllPage", status: "fulfilled", originalArgs: { artistId, sourceType }, data: { items: ids.map(id => ({ type: "ALBUM", data: { id, title: "Currents" } })) } });
+const state = { tidalApi: { queries: { right: entry(123,"ARTIST_ALBUMS",[77699617,77699617]), wrongArtist: entry(456,"ARTIST_ALBUMS",[47696788]), singles: entry(123,"ARTIST_TOP_SINGLES",[47696788]) } }, content: { albums: { 47696788: { id:47696788,title:"Currents" } } } };
+assert.deepEqual(readArtistAlbums(state,"123").albums.map(a=>a.id),["77699617"]);
+assert.equal(readArtistAlbums(state,"123").albums[0].title,"Currents");
+assert.equal(readArtistAlbums(state,"999").matchingLists,0);
+assert.equal(readArtistAlbums({},"123").albums.length,0);
+assert.equal(readArtistAlbums({tidalApi:{queries:{x:{...entry(123,"ARTIST_ALBUMS",[1]),status:"pending"}}}},"123").albums.length,0);
+assert.equal(readArtistAlbums({tidalApi:{queries:{x:entry(123,"ARTIST_ALBUMS",Array.from({length:50},(_,i)=>i))}}},"123").incomplete,true);
+assert.equal(readArtistAlbums({tidalApi:{queries:{x:{...entry(123,"ARTIST_ALBUMS",[]),data:{items:[null,{type:"TRACK",data:{id:1}},{type:"ALBUM",data:{}}]}}}}},"123").albums.length,0);
+console.log("PASS: artist/source isolation, no seeded membership, deduplication, malformed/unavailable/pending cache and truncation notice.");
