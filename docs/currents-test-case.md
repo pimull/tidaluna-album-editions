@@ -59,3 +59,16 @@ The user additionally reports that 77699617 is discoverable in the artist page A
 Do not infer that 77699617 can never appear in search: query, country, cached result state, pagination, and catalog changes may affect coverage. The 50 results are candidates returned by search, not 50 editions of Currents. The visible list includes unrelated artists/albums and Currents B-Sides & Remixes, which must not be automatically grouped based only on a shared word or artist.
 
 Next bounded milestone: inspect source-backed artist album-list retrieval, then verify whether that source supplies 77699617. Preserve provenance separately for search and artist-list results. Only after both sources are verified, combine candidates by album ID and evaluate related-release rules. Do not use the known-ID lookup to pretend automatic discovery succeeded.
+
+## AVB-004 client acceptance
+
+User screenshot confirms artist Tame Impala, ID 3736815, one matching ARTIST_ALBUMS list, five list items and five unique album IDs:
+- Deadbeat: 466933846
+- The Slow Rush: 130691516
+- Currents: 77699617
+- Lonerism: 28098315
+- InnerSpeaker: 97122857
+
+77699617 is present; 47696788 is not observed in this source. This independently verifies artist-list extraction and agrees with the user's earlier observation. Combined with the prior AVB-003-fix3 search acceptance, the two discovery sources expose different Currents releases. These were separate test runs, not a single exhaustive catalog snapshot. Search was inactive in the AVB-004 screenshot, so its zero counters do not invalidate the previous search verification.
+
+The artist-source milestone is accepted. Next bounded milestone: combine source-labelled candidates by album ID and show a conservative Currents candidate group using artist identity and title, preserving both original releases and their source labels. Do not imply audio equivalence, complete discovery, or MQA verification. Keep automatic search/pagination and general edition-suffix matching outside this next minimal test unless separately scoped.

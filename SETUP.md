@@ -183,3 +183,7 @@ Added an Artist Albums source panel with manual read button. Visit Tame Impala's
 Validation: build, settings smoke, search observer smoke, pure artist-cache tests, and HTTP AVB-004 marker passed. Artist-cache tests verify artist/source isolation, no seeded membership, deduplication, missing and pending cache, malformed items, and 50-item truncation notice. Source title mapping was checked against the public client's SI adapter. Public HTML still references the inspected bundle.
 
 The old development server was unavailable; a serve-only process was started on port 3000. No client verification or discovery of 77699617 is claimed yet. Next acceptance: screenshot of Artist Albums source including artist ID, matched-list count, and both target ID indicators. Do not proceed to grouping before verification.
+
+## AVB-004 verified in client
+
+The user's screenshot confirms artist 3736815, one matching list and five albums, with Currents 77699617 present and 47696788 absent from this observed list. Artist-source extraction is accepted; source coverage is not guaranteed exhaustive. No code changed after acceptance, so build tests were not repeated. See docs/currents-test-case.md for observed IDs and the next bounded milestone.
