@@ -4,6 +4,22 @@ A TidaLuna plugin that brings related album editions into one view, including re
 
 Version **0.1.0** is prepared locally; publication is pending. Based on the official [Luna template](https://github.com/Inrixia/luna-template).
 
+## Why I made this
+
+After seeing discussions on Reddit about album versions missing from TIDAL's version lists, I wanted an easier way to find related releases. Album Editions is inspired by Roon's album version browser and combines several TIDAL sources in one place.
+
+## Screenshots
+
+The Dark Side of the Moon: compare the original release, anniversary remaster and an Atmos edition.
+
+<img src="docs/screenshots/dark-side-of-the-moon.png" alt="The Dark Side of the Moon versions with first track specifications and an Atmos label" width="560">
+
+Random Access Memories: compare the standard and anniversary editions, track counts and first track specifications.
+
+<img src="docs/screenshots/random-access-memories.png" alt="Random Access Memories standard and anniversary editions with different track counts and audio specifications" width="560">
+
+Screenshots show results from the author's account. Availability can vary, and specifications apply to the first track rather than every track on the album.
+
 ## Use
 
 Open an album in TIDAL and click **Versions**. Results combine Other Versions, search and artist albums, deduplicate by album ID, and follow native links from matched editions. **Open album** navigates inside TIDAL without starting playback.
