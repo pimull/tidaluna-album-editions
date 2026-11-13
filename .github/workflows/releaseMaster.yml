@@ -1,0 +1,44 @@
+name: Prepare Release Draft
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: prepare-release
+  cancel-in-progress: false
+
+jobs:
+  Build:
+    uses: ./.github/workflows/build.yml
+  Draft:
+    needs: Build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: luna-artifacts
+          path: ./dist/
+      - name: Create unpublished draft
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION=$(node -p "require('./plugins/Example/package.json').version")
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Expected a stable semantic version"
+            exit 1
+          fi
+          gh release create "v$VERSION" \
+            dist/store.json dist/album-editions.json \
+            dist/album-editions.mjs dist/album-editions.mjs.map \
+            --target "$GITHUB_SHA" --draft \
+            --title "Album Editions $VERSION" \
+            --notes-file docs/release-0.1.0.md

@@ -1,0 +1,17 @@
+{
+  "name": "album-editions",
+  "description": "Discover related album editions and compare audio quality—all inside TIDAL.",
+  "main": "./src/index.ts",
+  "type": "module",
+  "version": "0.1.0",
+  "author": {
+    "name": "pimull",
+    "url": "https://github.com/pimull"
+  },
+  "homepage": "https://github.com/pimull/tidaluna-album-editions",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pimull/tidaluna-album-editions.git"
+  },
+  "license": "AGPL-3.0-only"
+}
