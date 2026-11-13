@@ -1,3 +1,4 @@
+import { panelStyles } from "./panelStyles";
 import { createMetadataRequest, clientVersionFromDocument } from "./http";
 import { readFirstTrackSpecification, specificationLabel, runSpecificationJobs } from "./specifications";
 import type { LunaUnload } from "@luna/core";
@@ -7,27 +8,31 @@ export const unloads=new Set<LunaUnload>();
 let disposed=false, controller:AbortController|undefined;
 const host=document.createElement("div");
 const shadow=host.attachShadow({mode:"open"});
-const style=document.createElement("style");style.textContent="*{box-sizing:border-box}h2{font:700 23px/1.25 system-ui;margin:0 0 16px}h3{font:600 18px/1.35 system-ui}p{font:400 14px/1.5 system-ui;margin:8px 0}small{font:400 12px/1.5 system-ui}button{font:600 14px system-ui}img{flex-shrink:0;border-radius:6px}strong{font:600 14px system-ui}";shadow.append(style);
+const style=document.createElement("style");style.textContent=panelStyles;shadow.append(style);
 const button=document.createElement("button");
 button.textContent="Versions";
-button.style.cssText="position:fixed;right:24px;bottom:115px;z-index:99990;padding:12px 18px;border:1px solid #aaa;border-radius:24px;background:#24242c;color:white;font:600 14px system-ui;cursor:pointer;display:none;box-shadow:0 4px 18px #0008";
+button.className="avb-trigger";button.style.display="none";
 button.setAttribute("aria-label","Find related album versions");
 const panel=document.createElement("section");
 panel.setAttribute("role","dialog");panel.setAttribute("aria-label","Related album versions");
-panel.style.cssText="position:fixed;right:24px;top:70px;bottom:110px;width:min(620px,calc(100vw - 48px));z-index:99999;overflow:auto;background:#17171e;color:#f5f5f5;border:1px solid #777;border-radius:16px;padding:20px;box-sizing:border-box;font:14px/1.5 system-ui;box-shadow:0 16px 50px #000a;display:none";
+panel.className="avb-panel";panel.style.display="none";
 const backdrop=document.createElement("div");
-backdrop.style.cssText="position:fixed;inset:0;z-index:99998;background:#0003;display:none";
+backdrop.className="avb-backdrop";backdrop.style.display="none";
 backdrop.setAttribute("aria-hidden","true");
 backdrop.onclick=()=>close();
 let activeId="", renderedId="";
 const el=(tag:string,text?:string)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};
 function close(){controller?.abort();panel.style.display="none";backdrop.style.display="none";button.disabled=false;button.focus();}
-function header(){panel.replaceChildren();const closeButton=el("button","Close ×") as HTMLButtonElement;closeButton.style.cssText="float:right;color:white;background:#333;border:1px solid #777;border-radius:6px;padding:6px 12px;cursor:pointer";closeButton.onclick=close;const heading=el("div");heading.style.cssText="position:sticky;top:-20px;background:#17171e;padding:12px 0;z-index:1";heading.append(closeButton,el("h2","Related album versions"));panel.append(heading,el("p","AVB-006.5 · Other Versions + Search + Artist Albums"));closeButton.focus();}
-function note(text:string){const p=el("p",text);panel.append(p);return p;}
+function header(){
+  panel.replaceChildren();panel.scrollTop=0;
+  const closeButton=el("button","Close ×") as HTMLButtonElement;closeButton.className="avb-close";closeButton.onclick=close;
+  const heading=el("div");heading.className="avb-header";heading.append(el("h2","Album versions"),closeButton);panel.append(heading);closeButton.focus();
+}
+function note(text:string){const p=el("p",text);p.className="avb-note";panel.append(p);return p;}
 const currentId=currentAlbumId;
 async function open(){
   controller?.abort();controller=new AbortController();const run=controller,signal=run.signal;
-  renderedId=activeId;panel.style.display="block";backdrop.style.display="block";header();const progress=note("Finding related releases…");progress.setAttribute("role","status");button.disabled=true;
+  renderedId=activeId;panel.style.display="block";backdrop.style.display="block";header();const progress=note("Finding related releases…");progress.setAttribute("role","status");progress.className="avb-intro";button.disabled=true;
   try {
     const {redux,TidalApi,ContentBase}=await import("@luna/lib");
     const state=redux.store.getState();const id=currentId(state);
@@ -36,25 +41,30 @@ async function open(){
     const request=createMetadataRequest(headers,clientVersionFromDocument);
     const result=await discover(id,{countryCode:state.session.countryCode,locale:state.settings.language},request,signal);
     if(disposed||signal.aborted||controller!==run)return;
-    progress.textContent=`${result.seed.title} · ${result.rows.length} release(s) including the current album`;
-    note(`${result.examined} unique source candidates checked. Edition matches are suggestions, not proof of identical audio.`);
-    for(const warning of result.warnings){const p=note(warning);p.style.color="#ffcf84";}
+    progress.textContent=`${result.seed.title} · ${result.rows.length} release(s) including this album`;
+    if(result.warnings.length){
+      const warnings=el("details");warnings.className="avb-warning";
+      warnings.append(el("summary","Some sources are incomplete · View details"));
+      for(const warning of result.warnings)warnings.append(el("p",warning));panel.append(warnings);
+    }
     if(result.rows.length===1)note(result.warnings.length?"No additional matches from the sources that succeeded. Discovery is incomplete.":"No additional matches found in these sources. Other editions may still exist.");
     const specJobs:Array<()=>Promise<void>>=[];
     for(const row of result.rows){
-      const card=el("article");card.style.cssText="display:flex;gap:16px;padding:18px 0;border-top:1px solid #444";
-      if(row.album.cover){const img=document.createElement("img");img.src=ContentBase.formatCoverUrl(row.album.cover,{res:"160"})!;img.alt="";img.width=88;img.height=88;img.style.objectFit="cover";card.append(img);}
-      const body=el("div");const title=el("h3",displayTitle(row.album));title.style.margin="0 0 8px";body.append(title);
+      const card=el("article");card.className="avb-card";
+      if(row.album.cover){const img=document.createElement("img");img.src=ContentBase.formatCoverUrl(row.album.cover,{res:"160"})!;img.alt="";img.width=88;img.height=88;img.className="avb-cover";card.append(img);}else{const placeholder=el("div");placeholder.className="avb-cover";placeholder.setAttribute("aria-hidden","true");card.append(placeholder);}
+      const body=el("div");
+      if(row.current){const badge=el("span","Current album");badge.className="avb-current";body.append(badge);}
+      body.append(el("h3",displayTitle(row.album)));
       const artist=(row.album.artists??(row.album.artist?[row.album.artist]:[])).map(a=>a.name).filter(Boolean).join(", ");
-      body.append(el("p",artist),el("p",`${row.album.releaseDate??"Date unknown"} · ${row.album.numberOfTracks??"?"} tracks`));
-      if(row.current){const badge=el("strong","Current album");badge.style.color="#9fe8d2";body.append(badge);}
-      const formats=el("p");formats.style.cssText="display:flex;gap:8px;flex-wrap:wrap";
+      const artistText=el("p",artist);artistText.className="avb-artist";
+      const metadata=el("p",`${row.album.releaseDate??"Date unknown"} · ${row.album.numberOfTracks??"?"} tracks`);metadata.className="avb-meta";body.append(artistText,metadata);
+      const formats=el("p");formats.className="avb-formats";
       const badges=audioBadges(row.album);
-      for(const badge of badges){const tag=el("span",badge.label);tag.style.cssText=`color:${badge.color};background:#24242c;border:1px solid currentColor;border-radius:5px;padding:3px 7px;font:600 13px system-ui`;tag.setAttribute("title","TIDAL album metadata; not a measured playback specification");formats.append(tag);}
+      for(const badge of badges){const tag=el("span",badge.label);tag.className="avb-format";tag.style.color=badge.color;tag.setAttribute("title","TIDAL album metadata; not a measured playback specification");formats.append(tag);}
       if(!badges.length)formats.textContent="Audio specification not confirmed";
       body.append(formats);
       if(!badges.some(b=>b.label==="Dolby Atmos"||b.label==="Sony 360 Reality Audio")){
-        const specStatus=el("p","Waiting for first-track specs…");specStatus.setAttribute("role","status");
+        const specStatus=el("p","Waiting for first-track specs…");specStatus.setAttribute("role","status");specStatus.className="avb-spec";
         if(specJobs.length<30)specJobs.push(async()=>{
           if(signal.aborted||disposed)return;
           specStatus.textContent="Reading first-track metadata…";
@@ -69,11 +79,20 @@ async function open(){
         else specStatus.textContent="Automatic specs limited to 30 releases";
         body.append(specStatus);
       }
-      body.append(el("p",`Sources: ${row.sources.join(" + ")}`),el("small",`${row.reason} · ID ${row.album.id}`));
-      const link=document.createElement("button");link.textContent=row.current?"Current album":"Open in TIDAL";link.disabled=row.current;link.style.cssText="display:block;color:#d7edff;background:#303846;border:1px solid #7c91a8;border-radius:6px;padding:8px 12px;margin-top:12px;cursor:pointer";link.onclick=()=>{try{openAlbumInClient(redux.store.dispatch.bind(redux.store),row.album.id);close();}catch{note("Could not navigate inside TIDAL.");}};body.append(link);card.append(body);panel.append(card);
+      const details=el("details");details.className="avb-details";
+      details.append(el("summary","Release details"),el("p",`Sources: ${row.sources.join(" + ")}`),el("p",`${row.reason} · Album ID ${row.album.id}`));body.append(details);
+      if(!row.current){
+        const link=document.createElement("button");link.textContent="Open album →";link.className="avb-open";
+        link.setAttribute("aria-label",`Open ${displayTitle(row.album)} in TIDAL`);
+        link.onclick=()=>{try{openAlbumInClient(redux.store.dispatch.bind(redux.store),row.album.id);close();}catch{note("Could not navigate inside TIDAL.");}};body.append(link);
+      }
+      card.append(body);panel.append(card);
     }
     void runSpecificationJobs(specJobs,signal);
-    note("First-track specs describe the returned stereo stream; other tracks may differ. Coverage is limited to queried sources.");
+    const footer=el("div");footer.className="avb-footer";
+    footer.append(el("p","Audio specs are for the first track. Other tracks may differ."));
+    const diagnostics=el("details");diagnostics.className="avb-details";
+    diagnostics.append(el("summary","About these results"),el("p",`${result.examined} source candidates checked. Related editions are suggestions, not proof of identical audio. Available sources may not include every release.`),el("p","Album Version Browser · 0.1.0-rc.1"));footer.append(diagnostics);panel.append(footer);
   }catch(error){if(!signal.aborted&&!disposed&&controller===run)progress.textContent=`Unable to load versions: ${error instanceof Error?error.message:"unknown error"}`;}
   finally{if(controller===run)button.disabled=false;}
 }

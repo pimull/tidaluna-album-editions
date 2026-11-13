@@ -1,6 +1,7 @@
 {
   "name": "album-version-browser",
-  "description": "AVB-006.5 — Find related editions from an album page. Automatic search and artist discovery.",
+  "description": "Browse related album editions, compare first-track audio specs, and open releases in TIDAL.",
   "main": "./src/index.ts",
-  "type": "module"
+  "type": "module",
+  "version": "0.1.0-rc.1"
 }
