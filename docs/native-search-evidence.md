@@ -1,6 +1,6 @@
 # Native search implementation evidence
 
-Inspected read-only installation: C:/Users/zhy18/AppData/Local/TIDAL/app-2.47.0/resources/original.asar. Its Windows configuration loads https://desktop.tidal.com/. Installed Luna package reports 1.20.2-beta.
+Inspected read-only installation: %LOCALAPPDATA%/TIDAL/app-2.47.0/resources/original.asar. Its Windows configuration loads https://desktop.tidal.com/. Installed Luna package reports 1.20.2-beta.
 
 The public desktop HTML referenced https://desktop.tidal.com/assets/index-DnY8hG-p.js. This current public bundle may differ from an already-running client's cached version. No installation files were modified and no account credentials were read.
 

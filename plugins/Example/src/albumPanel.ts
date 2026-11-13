@@ -92,7 +92,7 @@ async function open(){
     const footer=el("div");footer.className="avb-footer";
     footer.append(el("p","Audio specs are for the first track. Other tracks may differ."));
     const diagnostics=el("details");diagnostics.className="avb-details";
-    diagnostics.append(el("summary","About these results"),el("p",`${result.examined} source candidates checked. Related editions are suggestions, not proof of identical audio. Available sources may not include every release.`),el("p","Album Version Browser · 0.1.0-rc.1"));footer.append(diagnostics);panel.append(footer);
+    diagnostics.append(el("summary","About these results"),el("p",`${result.examined} source candidates checked. Related editions are suggestions, not proof of identical audio. Available sources may not include every release.`),el("p","Album Editions · 0.1.0"));footer.append(diagnostics);panel.append(footer);
   }catch(error){if(!signal.aborted&&!disposed&&controller===run)progress.textContent=`Unable to load versions: ${error instanceof Error?error.message:"unknown error"}`;}
   finally{if(controller===run)button.disabled=false;}
 }

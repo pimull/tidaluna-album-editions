@@ -15,7 +15,7 @@ globalThis.document={body:new Element('body'),createElement:t=>new Element(t),ad
 globalThis.setInterval=fn=>{timers.add(fn);return fn;};
 globalThis.clearInterval=fn=>timers.delete(fn);
 globalThis.luna={core:{LunaPlugin:{getByName:()=>undefined},modules:{react:{createElement:(type,props,...children)=>({type,props,children})},'@luna/lib':{redux:{store:{getState:()=>({router:{currentParams:{albumId:'1'}}})}}}}}};
-const code=await readFile(new URL('../dist/album-version-browser.mjs',import.meta.url),'utf8');
+const code=await readFile(new URL('../dist/album-editions.mjs',import.meta.url),'utf8');
 const plugin=await import(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`);
 await new Promise(resolve=>setTimeout(resolve,0));
 assert.equal(typeof plugin.Settings,'function');

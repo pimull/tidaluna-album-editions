@@ -1,8 +1,8 @@
-# Album Version Browser
+# Album Editions
 
 A TidaLuna plugin that brings related album editions into one view, including releases missing from native Other Versions links.
 
-Current build: **0.1.0-rc.1**, a local release candidate, not published. Based on the official [Luna template](https://github.com/Inrixia/luna-template).
+Version **0.1.0** is prepared locally; publication is pending. Based on the official [Luna template](https://github.com/Inrixia/luna-template).
 
 ## Use
 
@@ -35,4 +35,16 @@ Authentication stays in memory and is not logged or exported. The plugin does no
 
 The user confirmed AVB-006.5 resolved the artist HTTP 400 and grouped Currents 47696788 from Search with 77699617 from Artist Albums. Automatic specifications also worked.
 
-This candidate changes presentation, not discovery or specification logic. Wide/narrow layouts were inspected in a headless browser using the built plugin with mock data. In-client visual acceptance remains pending. Nothing has been published or submitted. See [release notes](docs/release-0.1.0.md).
+This candidate changes presentation, not discovery or specification logic. Wide/narrow layouts were inspected in a headless browser using the built plugin with mock data. The user accepted the visual candidate in TIDAL. Nothing has been published or submitted. See [release notes](docs/release-0.1.0.md).
+
+## Publication
+
+Repository: https://github.com/pimull/tidaluna-album-editions
+
+Pushes and pull requests only build and test. Run **Prepare Release Draft** manually in GitHub Actions to create an unpublished release draft. Review its four assets and publish explicitly from GitHub Releases. The store URL after publication is:
+
+```text
+https://github.com/pimull/tidaluna-album-editions/releases/latest/download/store.json
+```
+
+The release plugin ID is `album-editions`. Disable the earlier `album-version-browser` DEV plugin before installing it. No release exists until the publishing step is completed.

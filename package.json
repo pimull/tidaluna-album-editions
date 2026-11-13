@@ -1,6 +1,6 @@
 {
-  "name": "@luna/template",
-  "description": "Template repo for making your own luna plugins",
+  "name": "pimull-album-editions-store",
+  "description": "Album Editions for TidaLuna by pimull.",
   "type": "module",
   "scripts": {
     "watch": "concurrently \"pnpm:build --watch\" pnpm:serve",
@@ -19,5 +19,18 @@
     "rimraf": "^6.1.2",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"
-  }
+  },
+  "version": "0.1.0",
+  "author": {
+    "name": "pimull",
+    "url": "https://github.com/pimull"
+  },
+  "homepage": "https://github.com/pimull/tidaluna-album-editions",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pimull/tidaluna-album-editions.git"
+  },
+  "license": "AGPL-3.0-only",
+  "private": true,
+  "packageManager": "pnpm@10.5.2"
 }

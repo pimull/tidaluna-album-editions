@@ -1,20 +1,25 @@
-# 0.1.0 release candidate
+# Album Editions 0.1.0
 
-Status: local 0.1.0-rc.1; not published.
+The first release of Album Editions, a TidaLuna plugin for browsing related album releases inside TIDAL.
 
-## Changes
+- Combine Other Versions, search and artist albums, including releases missing from native associations.
+- Follow linked editions and deduplicate by album ID.
+- Compare automatic first-track bit depth and sample rate, with cyan lossless, yellow Hi-Res and blue Atmos labels.
+- Open any edition inside TIDAL without starting playback.
+- Browse compact cards, expandable release details and a responsive panel; close with Escape or an outside click.
 
-- Compact cards with consistent typography, covers, spacing and separators.
-- Current-album indicator replaces a redundant disabled button.
-- Cyan lossless/CD, yellow Hi-Res and blue spatial labels retained.
-- Sources, IDs and matching reasons move into expandable Release details.
-- Failures retain a visible warning; detailed messages expand on demand.
-- Development diagnostics move to About these results.
-- Sticky header, outside-click dismissal, Escape and keyboard focus outlines.
-- Responsive narrow layout, missing-artwork placeholder and isolated styles.
+First-track specifications describe the returned stream, not every track or proof of identical audio. Discovery is bounded and cannot guarantee complete coverage. MQA identification and Atmos filters are not included.
+
+## Installation
+
+After this release is published, add this custom store in Luna Settings:
+
+https://github.com/pimull/tidaluna-album-editions/releases/latest/download/store.json
+
+Install `album-editions`. Disable the old `album-version-browser` DEV plugin before enabling this release to avoid duplicate buttons.
 
 ## Validation
 
-The real built bundle was visually inspected with simulated Moon editions in headless Edge at 1100px and 500px widths. Covers were mock illustrations. No TIDAL desktop interaction was used.
+The author verified Currents editions 47696788 and 77699617 are discovered from different sources with no artist HTTP 400. Automatic specifications and the visual candidate were accepted in-client. Local build/regression tests pass; GitHub's Linux build must also pass before publication.
 
-The user confirmed AVB-006.5 eliminated artist HTTP 400 and found both Currents editions with automatic specifications. This candidate retains that logic. Before publishing, check long titles, automatic specs, expanded details, navigation and closing after scrolling in the installed client. Publication requires a separate explicit instruction.
+Based on the official Inrixia/luna-template; distributed with the existing AGPL-3.0 license.
