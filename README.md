@@ -22,15 +22,25 @@ Screenshots show results from the author's account. Availability can vary, and s
 
 ## Installation
 
-1. Open **Luna Settings** in TIDAL.
+TidaLuna must be installed first. Choose either installation method below.
+
+### From the TidaLuna plugin store
+
+1. Open **Luna Settings** in TIDAL and go to **Plugin Store**.
+2. Find **Album Editions** (`album-editions`) and install it.
+3. Enable the plugin, open an album page, and click **Versions**.
+
+### From a custom plugin store
+
+You can also install Album Editions by adding its custom store:
+
+1. Open **Luna Settings** in TIDAL and go to **Plugin Store**.
 2. Add the following URL as a custom plugin store:
 
    https://github.com/pimull/tidaluna-album-editions/releases/latest/download/store.json
 
 3. Find **Album Editions** (`album-editions`) in the plugin store and install it.
 4. Enable the plugin, open an album page, and click **Versions**.
-
-TidaLuna must be installed first. Album Editions is currently distributed through this custom store.
 
 ## Use
 
